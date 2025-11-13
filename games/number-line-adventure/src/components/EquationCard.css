@@ -1,0 +1,110 @@
+.equation-card {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem 1.1rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+}
+
+.equation-card__eyebrow {
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #6b7280;
+}
+
+.equation-card__equation {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.equation-card__token {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 0.65rem 0.85rem 0.4rem;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 1.8rem;
+  color: #0f172a;
+  text-align: center;
+  line-height: 1;
+}
+
+.equation-card__token[data-tone='given'] {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.equation-card__token[data-tone='change'] {
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.equation-card__token--result {
+  min-width: 90px;
+  background: #fae8ff;
+  color: #86198f;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  box-shadow: 0 8px 20px rgba(134, 25, 143, 0.25);
+}
+
+.equation-card__token--guess {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.equation-card__token--answer {
+  background: #bbf7d0;
+  color: #166534;
+}
+
+.equation-card__token--pending {
+  background: #f5f3ff;
+  color: #5b21b6;
+}
+
+.equation-card__label {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+  color: #475569;
+}
+
+.equation-card__operator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #4c1d95;
+}
+
+.equation-card__caption {
+  margin: 0.65rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+@media (max-width: 540px) {
+  .equation-card__equation {
+    justify-content: center;
+  }
+
+  .equation-card__token {
+    flex: 1 1 100px;
+  }
+}
