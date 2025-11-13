@@ -21,13 +21,19 @@ export const NumberLine = ({ min, max, start, end, reveal = false }: NumberLineP
 
   const startPercent = getPercent(start, min, max)
   const endPercent = getPercent(end, min, max)
-  const pathLeft = Math.min(startPercent, endPercent)
-  const pathWidth = Math.abs(endPercent - startPercent)
+
+  // Adjust for the 6% left padding of the ticks container (spans 6% to 94%)
+  const adjustedStartPercent = 6 + (startPercent * 0.88)
+  const adjustedEndPercent = 6 + (endPercent * 0.88)
+  const pathLeft = Math.min(adjustedStartPercent, adjustedEndPercent)
+  const pathWidth = Math.abs(adjustedEndPercent - adjustedStartPercent)
   const hopCount = Math.abs(end - start)
   const direction = end >= start ? 1 : -1
   const footprints = Array.from({ length: hopCount }, (_, index) => {
     const stepValue = start + direction * (index + 1)
-    return { id: `${stepValue}-${index}`, percent: getPercent(stepValue, min, max) }
+    const rawPercent = getPercent(stepValue, min, max)
+    const adjustedPercent = 6 + (rawPercent * 0.88)
+    return { id: `${stepValue}-${index}`, percent: adjustedPercent }
   })
 
   return (
@@ -59,35 +65,26 @@ export const NumberLine = ({ min, max, start, end, reveal = false }: NumberLineP
       </div>
       <div className="number-line__ticks">
         {ticks.map(({ value, percent }) => {
-          const showLabel = value === min || value === max || value % 2 === 0
           return (
             <div className="number-line__tick" style={{ left: `${percent}%` }} key={value}>
               <span className="number-line__tick-mark" />
-              {showLabel && <span className="number-line__label">{value}</span>}
+              <span className="number-line__label">{value}</span>
             </div>
           )
         })}
       </div>
-      <div className="number-line__marker number-line__marker--start" style={{ left: `${startPercent}%` }}>
-        <span role="img" aria-label="Bunny start" className="number-line__emoji">
-          🐰
-        </span>
-        Start
+      <div
+        className={`number-line__marker ${reveal ? 'number-line__marker--moving' : ''}`}
+        style={{ left: reveal ? `${adjustedEndPercent}%` : `${adjustedStartPercent}%` }}
+      >
+        <span role="img" aria-label="Bunny position">🐰</span>
       </div>
       {reveal && (
         <>
           <div className="number-line__path" style={{ left: `${pathLeft}%`, width: `${pathWidth}%` }} aria-hidden />
           {footprints.map(({ id, percent }) => (
-            <span key={id} className="number-line__hop" style={{ left: `${percent}%` }} aria-hidden>
-              🐾
-            </span>
+            <span key={id} className="number-line__hop" style={{ left: `${percent}%` }} aria-hidden></span>
           ))}
-          <div className="number-line__marker number-line__marker--end" style={{ left: `${endPercent}%` }}>
-            <span role="img" aria-label="Carrot reward" className="number-line__emoji">
-              🥕
-            </span>
-            Landing
-          </div>
         </>
       )}
     </div>

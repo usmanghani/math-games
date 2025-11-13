@@ -130,28 +130,37 @@
   position: absolute;
   bottom: 20px;
   transform: translateX(-50%);
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 0.85rem;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.2));
+  z-index: 10;
+  transition: left 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.number-line__marker--start {
-  background: #22d3ee;
-  color: #0f172a;
-}
-
-.number-line__marker--end {
-  background: #34d399;
-  color: #064e3b;
+.number-line__marker--moving {
+  animation: bunnyHop 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .number-line__emoji {
   font-size: 1.2rem;
+}
+
+.number-line__dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
+}
+
+.number-line__dot--start {
+  background: #22d3ee;
+  border: 2px solid #0891b2;
+}
+
+.number-line__dot--end {
+  background: #34d399;
+  border: 2px solid #059669;
 }
 
 .number-line__path {
@@ -165,9 +174,14 @@
 
 .number-line__hop {
   position: absolute;
-  top: 44%;
-  transform: translateX(-50%);
-  font-size: 1.1rem;
+  top: 64%;
+  transform: translateX(-50%) translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #a855f7;
+  border: 1.5px solid #7c3aed;
+  box-shadow: 0 1px 4px rgba(168, 85, 247, 0.4);
   animation: pop 0.8s ease forwards;
 }
 
@@ -204,5 +218,17 @@
   100% {
     transform: translate(-50%, 0);
     opacity: 1;
+  }
+}
+
+@keyframes bunnyHop {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(-50%) translateY(-12px);
+  }
+  30%, 50%, 70%, 90% {
+    transform: translateX(-50%) translateY(0);
   }
 }
