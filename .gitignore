@@ -4,8 +4,12 @@ node_modules/
 dist/
 build/
 .yarn/
-.DS_Store
 .idea/
 .vscode/
 coverage/
 artifacts/
+.cache/
+.env.*
+.vscode/
+.DS_Store
+*.log
