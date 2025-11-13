@@ -1,14 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm install && pnpm --filter number-line-adventure build",
-  "devCommand": "pnpm --filter number-line-adventure dev",
-  "installCommand": "pnpm install",
-  "framework": null,
-  "outputDirectory": "games/number-line-adventure/.next",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/games/number-line-adventure/$1"
-    }
-  ]
+  "buildCommand": "cd games/number-line-adventure && npm install && npm run build",
+  "devCommand": "cd games/number-line-adventure && npm run dev",
+  "installCommand": "npm install --prefix games/number-line-adventure",
+  "outputDirectory": "games/number-line-adventure/.next"
 }
