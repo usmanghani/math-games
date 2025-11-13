@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "pnpm --filter number-line-adventure dev",
     "build": "pnpm --filter number-line-adventure build",
-    "lint": "pnpm --filter number-line-adventure lint",
-    "test": "pnpm --filter number-line-adventure test"
+    "lint": "pnpm --filter number-line-adventure lint"
   },
   "keywords": [
     "math",
