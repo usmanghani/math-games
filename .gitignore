@@ -1,0 +1,12 @@
+# Node and web build artifacts
+node_modules/
+dist/
+build/
+.next/
+.cache/
+coverage/
+.env
+.env.*
+.vscode/
+.DS_Store
+*.log
