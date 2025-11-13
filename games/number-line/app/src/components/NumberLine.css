@@ -1,0 +1,234 @@
+.number-line {
+  position: relative;
+  width: 100%;
+  padding: 84px 32px 56px;
+  border-radius: 32px;
+  background: linear-gradient(180deg, #dbeafe 0%, #e0fbfc 55%, #fef3c7 100%);
+  overflow: hidden;
+  min-height: 240px;
+}
+
+.number-line__legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  position: absolute;
+  top: 20px;
+  left: 32px;
+  right: 32px;
+}
+
+.number-line__legend-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 999px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.number-line__legend-card--start {
+  border: 2px solid #22d3ee;
+}
+
+.number-line__legend-card--end {
+  border: 2px solid #34d399;
+}
+
+.number-line__legend-emoji {
+  font-size: 1.5rem;
+}
+
+.number-line__legend-label {
+  margin: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #475569;
+}
+
+.number-line__legend-value {
+  margin: 0.1rem 0 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.number-line__decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.number-line__cloud {
+  position: absolute;
+  width: 100px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50px;
+  filter: blur(0.2px);
+  animation: float 6s ease-in-out infinite;
+}
+
+.number-line__cloud--one {
+  top: 12px;
+  left: 12%;
+  animation-delay: 0.2s;
+}
+
+.number-line__cloud--two {
+  top: 6px;
+  right: 10%;
+  width: 120px;
+  animation-delay: 1.2s;
+}
+
+.number-line__sun {
+  position: absolute;
+  top: -20px;
+  left: -30px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fde047 0%, #f97316 80%);
+  opacity: 0.35;
+}
+
+.number-line__ticks {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 48%;
+  height: 90px;
+}
+
+.number-line__tick {
+  position: absolute;
+  text-align: center;
+  transform: translateX(-50%);
+  color: #1f2937;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.number-line__tick-mark {
+  display: block;
+  width: 3px;
+  height: 28px;
+  margin: 0 auto 10px;
+  background: #1f2937;
+}
+
+.number-line__label {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.number-line__marker {
+  position: absolute;
+  bottom: 20px;
+  transform: translateX(-50%);
+  font-size: 1.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.2));
+  z-index: 10;
+  transition: left 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.number-line__marker--moving {
+  animation: bunnyHop 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.number-line__emoji {
+  font-size: 1.2rem;
+}
+
+.number-line__dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
+}
+
+.number-line__dot--start {
+  background: #22d3ee;
+  border: 2px solid #0891b2;
+}
+
+.number-line__dot--end {
+  background: #34d399;
+  border: 2px solid #059669;
+}
+
+.number-line__path {
+  position: absolute;
+  top: 64%;
+  height: 8px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(90deg, #a855f7 0, #a855f7 10px, transparent 10px, transparent 20px);
+  animation: hop 0.8s ease-out forwards;
+}
+
+.number-line__hop {
+  position: absolute;
+  top: 64%;
+  transform: translateX(-50%) translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #a855f7;
+  border: 1.5px solid #7c3aed;
+  box-shadow: 0 1px 4px rgba(168, 85, 247, 0.4);
+  animation: pop 0.8s ease forwards;
+}
+
+@keyframes hop {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: translate(-50%, 10px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes bunnyHop {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(-50%) translateY(-12px);
+  }
+  30%, 50%, 70%, 90% {
+    transform: translateX(-50%) translateY(0);
+  }
+}
