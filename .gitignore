@@ -1,11 +1,14 @@
-# Node and web build artifacts
 node_modules/
+.env
+.next/
 dist/
 build/
-.next/
-.cache/
+.yarn/
+.idea/
+.vscode/
 coverage/
-.env
+artifacts/
+.cache/
 .env.*
 .vscode/
 .DS_Store

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title>Number Line Adventure Icon</title>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#65c3ff" />
+      <stop offset="100%" stop-color="#7ae28c" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)" />
+  <line x1="16" y1="92" x2="112" y2="92" stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
+  <circle cx="64" cy="60" r="22" fill="#ffdd57" stroke="#ffffff" stroke-width="6" />
+  <path d="M48 68 L64 44 L80 68" fill="none" stroke="#ff8a00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+  <line x1="64" y1="60" x2="64" y2="92" stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
+</svg>

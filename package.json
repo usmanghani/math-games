@@ -1,0 +1,20 @@
+{
+  "name": "math-games",
+  "version": "0.1.0",
+  "description": "Monorepo housing educational math games and shared tooling.",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter number-line-adventure dev",
+    "build": "pnpm --filter number-line-adventure build",
+    "lint": "pnpm --filter number-line-adventure lint",
+    "test": "pnpm --filter number-line-adventure test"
+  },
+  "keywords": [
+    "math",
+    "education",
+    "games"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.11.0"
+}
