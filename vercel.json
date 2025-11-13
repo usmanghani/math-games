@@ -1,7 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd games/number-line-adventure && npm install && npm run build",
-  "devCommand": "cd games/number-line-adventure && npm run dev",
-  "installCommand": "npm install --prefix games/number-line-adventure",
-  "outputDirectory": "games/number-line-adventure/.next"
-}
