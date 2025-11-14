@@ -44,22 +44,50 @@ const buildPrompt = (problem: NumberLineProblem) => {
   }. Where will it land?`
 }
 
+/**
+ * Generate a math problem for the number line game
+ * @param range The min/max range for numbers (default: 0-20)
+ * @param allowed Operations to use (default: addition and subtraction)
+ * @param fixedDelta Optional fixed jump size. If not provided, generates random delta (1-5)
+ * @returns NumberLineProblem with start, delta, operation, answer, and options
+ */
 export const generateProblem = (
   range: ProblemRange = DEFAULT_RANGE,
   allowed: Operation[] = OPERATIONS,
+  fixedDelta?: number,
 ): NumberLineProblem => {
   const normalizedRange: ProblemRange = {
     min: Math.min(range.min, range.max),
     max: Math.max(range.min, range.max),
   }
 
+  // Use fixed delta if provided, otherwise generate random delta (1-5 or max possible)
   const maxJump = Math.max(1, Math.min(5, normalizedRange.max - normalizedRange.min))
-  const delta = randInt(1, maxJump)
+  const delta = fixedDelta !== undefined ? fixedDelta : randInt(1, maxJump)
+
+  // Validate delta is within range
+  if (delta <= 0 || delta > normalizedRange.max - normalizedRange.min) {
+    throw new Error(
+      `Invalid delta ${delta} for range [${normalizedRange.min}, ${normalizedRange.max}]`
+    )
+  }
+
   const operation = pickOperation(allowed, delta, normalizedRange)
+
+  // Calculate valid starting positions to ensure positive results only
+  // For addition: start + delta must be <= max, so start <= max - delta
+  // For subtraction: start - delta must be >= min, so start >= min + delta
   const startMin = operation === 'addition' ? normalizedRange.min : normalizedRange.min + delta
   const startMax = operation === 'addition' ? normalizedRange.max - delta : normalizedRange.max
   const start = randInt(startMin, startMax)
   const answer = operation === 'addition' ? start + delta : start - delta
+
+  // Ensure answer is always positive (>= 0)
+  if (answer < normalizedRange.min || answer > normalizedRange.max) {
+    throw new Error(
+      `Generated answer ${answer} is outside range [${normalizedRange.min}, ${normalizedRange.max}]`
+    )
+  }
 
   const options = new Set<number>([answer])
   while (options.size < 3) {
@@ -81,4 +109,25 @@ export const generateProblem = (
   }
 
   return { ...problem, prompt: buildPrompt(problem) }
+}
+
+/**
+ * Generate a problem from a LevelConfig
+ * Convenience function that extracts the necessary parameters from LevelConfig
+ * @param levelConfig The level configuration (from database or defaults)
+ * @returns NumberLineProblem configured for the specified level
+ */
+export const generateProblemFromLevel = (
+  levelConfig: {
+    delta: number
+    minRange: number
+    maxRange: number
+    operations: Operation[]
+  }
+): NumberLineProblem => {
+  return generateProblem(
+    { min: levelConfig.minRange, max: levelConfig.maxRange },
+    levelConfig.operations,
+    levelConfig.delta
+  )
 }
