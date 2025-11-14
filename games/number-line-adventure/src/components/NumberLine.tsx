@@ -83,7 +83,14 @@ export const NumberLine = ({ min, max, start, end, reveal = false }: NumberLineP
         <>
           <div className="number-line__path" style={{ left: `${pathLeft}%`, width: `${pathWidth}%` }} aria-hidden />
           {footprints.map(({ id, percent }) => (
-            <span key={id} className="number-line__hop" style={{ left: `${percent}%` }} aria-hidden></span>
+            <span
+              key={id}
+              className={`number-line__hop ${direction === -1 ? 'number-line__hop--backward' : ''}`}
+              style={{ left: `${percent}%` }}
+              aria-hidden
+            >
+              🐾
+            </span>
           ))}
         </>
       )}
