@@ -49,8 +49,11 @@ export function useMicRecorder(options: UseMicRecorderOptions = {}) {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastUrlRef = useRef<string | null>(null);
   const startedAtRef = useRef<number | null>(null);
+  // Store event listener refs so we can properly remove them
+  const onDataAvailableRef = useRef<((event: BlobEvent) => void) | null>(null);
+  const onErrorRef = useRef<((event: Event) => void) | null>(null);
+  const onStopRef = useRef<(() => void) | null>(null);
 
   const clearTimers = useCallback(() => {
     if (timerRef.current) {
@@ -64,10 +67,19 @@ export function useMicRecorder(options: UseMicRecorderOptions = {}) {
   }, []);
 
   const cleanupStream = useCallback(() => {
-    recorderRef.current?.removeEventListener("dataavailable", () => null);
-    recorderRef.current?.removeEventListener("stop", () => null);
-    recorderRef.current?.removeEventListener("error", () => null);
-    recorderRef.current = null;
+    // Properly remove event listeners using stored refs
+    if (recorderRef.current) {
+      if (onDataAvailableRef.current) {
+        recorderRef.current.removeEventListener("dataavailable", onDataAvailableRef.current);
+      }
+      if (onStopRef.current) {
+        recorderRef.current.removeEventListener("stop", onStopRef.current);
+      }
+      if (onErrorRef.current) {
+        recorderRef.current.removeEventListener("error", onErrorRef.current);
+      }
+      recorderRef.current = null;
+    }
 
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -114,15 +126,14 @@ export function useMicRecorder(options: UseMicRecorderOptions = {}) {
   }, []);
 
   const resetLastRecording = useCallback(() => {
-    if (lastUrlRef.current) {
-      URL.revokeObjectURL(lastUrlRef.current);
-      lastUrlRef.current = null;
-    }
+    // Don't revoke URL here - let it persist for playback in AttemptHistory
+    // URLs will be cleaned up when the component unmounts
     setLastRecording(null);
   }, []);
 
   const startRecording = useCallback(async () => {
-    if (status === "recording") {
+    // Guard against starting in any non-idle state
+    if (status !== "idle") {
       return;
     }
     resetLastRecording();
@@ -134,13 +145,14 @@ export function useMicRecorder(options: UseMicRecorderOptions = {}) {
       recorderRef.current = recorder;
       chunksRef.current = [];
 
-      recorder.addEventListener("dataavailable", (event) => {
+      // Store event listeners in refs for proper cleanup
+      onDataAvailableRef.current = (event) => {
         if (event.data && event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
-      });
+      };
 
-      recorder.addEventListener("error", (event) => {
+      onErrorRef.current = (event) => {
         console.error("MediaRecorder error", event);
         setError(
           (event as unknown as ErrorEvent)?.error?.message ??
@@ -148,17 +160,13 @@ export function useMicRecorder(options: UseMicRecorderOptions = {}) {
         );
         setStatus("idle");
         cleanupStream();
-      });
+      };
 
-      recorder.addEventListener("stop", () => {
+      onStopRef.current = () => {
         clearTimers();
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType });
         chunksRef.current = [];
         const url = URL.createObjectURL(blob);
-        if (lastUrlRef.current) {
-          URL.revokeObjectURL(lastUrlRef.current);
-        }
-        lastUrlRef.current = url;
 
         const finalDuration =
           startedAtRef.current !== null
@@ -178,7 +186,11 @@ export function useMicRecorder(options: UseMicRecorderOptions = {}) {
         });
         setStatus("idle");
         cleanupStream();
-      });
+      };
+
+      recorder.addEventListener("dataavailable", onDataAvailableRef.current);
+      recorder.addEventListener("error", onErrorRef.current);
+      recorder.addEventListener("stop", onStopRef.current);
 
       recorder.start();
       setStatus("recording");

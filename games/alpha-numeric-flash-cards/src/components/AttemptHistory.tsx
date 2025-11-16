@@ -1,6 +1,6 @@
 'use client';
 
-import { RecordingResult } from "@/hooks/useMicRecorder";
+import { RecordingResult, MicPermission } from "@/hooks/useMicRecorder";
 import { formatDuration } from "@/utils/duration";
 
 export interface Attempt {
@@ -16,7 +16,7 @@ interface AttemptHistoryProps {
   attempts: Attempt[];
   pending?: boolean;
   error?: string | null;
-  permission: string;
+  permission: MicPermission;
 }
 
 export function AttemptHistory({

@@ -9,31 +9,27 @@ import { MicButton } from "@/components/MicButton";
 import { AttemptHistory, Attempt, toAttempt } from "@/components/AttemptHistory";
 import { useFlashDeck } from "@/hooks/useFlashDeck";
 import { MicPermission, RecorderStatus, useMicRecorder } from "@/hooks/useMicRecorder";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export function Playground() {
   const [mode, setMode] = useState<CardMode>("numbers");
   const { currentCard, position, total, advance, reshuffle } = useFlashDeck(mode);
   const recorder = useMicRecorder();
   const [attempts, setAttempts] = useState<Attempt[]>([]);
+  const cardForRecordingRef = useRef<{ id: string; label: string } | null>(null);
 
   useEffect(() => {
     const recording = recorder.lastRecording;
-    if (!recording) return;
-    const timeout = setTimeout(() => {
-      setAttempts((prev) => {
-        const next = [
-          toAttempt(recording, {
-            id: currentCard.id,
-            label: currentCard.label,
-          }),
-          ...prev,
-        ];
-        return next.slice(0, 5);
-      });
-    }, 0);
-    return () => clearTimeout(timeout);
-  }, [recorder.lastRecording, currentCard.id, currentCard.label]);
+    if (!recording || !cardForRecordingRef.current) return;
+
+    const card = cardForRecordingRef.current;
+    cardForRecordingRef.current = null; // Consume the ref
+
+    setAttempts((prev) => {
+      const next = [toAttempt(recording, card), ...prev];
+      return next.slice(0, 5);
+    });
+  }, [recorder.lastRecording]);
 
   return (
     <section className="grid gap-6 lg:grid-cols-[minmax(0,280px)_1fr]">
@@ -58,7 +54,10 @@ export function Playground() {
               status={recorder.status}
               permission={recorder.permission}
               isSupported={recorder.isSupported}
-              onStart={recorder.startRecording}
+              onStart={() => {
+                cardForRecordingRef.current = { id: currentCard.id, label: currentCard.label };
+                recorder.startRecording();
+              }}
               onStop={recorder.stopRecording}
             />
             <button
@@ -98,7 +97,7 @@ function CaptureStatus({
   durationMs: number;
 }) {
   const durationSeconds = (durationMs / 1000).toFixed(1);
-  const texts: Record<string, { title: string; helper: string }> = {
+  const texts: Record<RecorderStatus, { title: string; helper: string }> = {
     idle: {
       title: "Mic idle",
       helper: "Tap the mint button to start listening.",
@@ -109,11 +108,11 @@ function CaptureStatus({
     },
     stopping: {
       title: "Transcribing…",
-      helper: "We are comparing your child’s answer.",
+      helper: "We are comparing your child's answer.",
     },
   };
 
-  const activeText = texts[status] ?? texts.idle;
+  const activeText = texts[status];
 
   return (
     <div className="rounded-3xl border border-slate-100 bg-white/90 p-4 shadow-[0_12px_60px_rgba(209,224,255,0.45)]">

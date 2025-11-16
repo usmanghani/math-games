@@ -35,11 +35,13 @@ export function MicButton({
 
   const handlePress = () => {
     if (!isSupported) return;
+    if (permission === "denied") return;
+    // Guard against clicking during stopping state
+    if (status === "stopping") return;
     if (status === "recording") {
       onStop();
       return;
     }
-    if (permission === "denied") return;
     onStart();
   };
 
@@ -49,7 +51,7 @@ export function MicButton({
         type="button"
         onClick={handlePress}
         whileTap={{ scale: busy ? 1 : 0.96 }}
-        disabled={permission === "denied" || !isSupported}
+        disabled={permission === "denied" || !isSupported || status === "stopping"}
         className={`relative flex min-h-[96px] flex-1 items-center justify-center gap-4 rounded-full px-6 py-4 text-lg font-semibold text-slate-900 shadow-[0_15px_45px_rgba(125,230,194,0.6)] transition hover:shadow-[0_25px_75px_rgba(125,230,194,0.75)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 ${
           busy
             ? "bg-emerald-200/80 cursor-pointer"
