@@ -1,42 +1,75 @@
 'use client';
 
-import { MicPhase } from "@/hooks/useMicSimulator";
+import { MicPermission, RecorderStatus } from "@/hooks/useMicRecorder";
 import { motion } from "framer-motion";
 
 interface MicButtonProps {
-  phase: MicPhase;
-  onPress: () => void;
+  status: RecorderStatus;
+  permission: MicPermission;
+  isSupported: boolean;
+  onStart: () => void;
+  onStop: () => void;
 }
 
-const LABELS: Record<MicPhase, string> = {
+const STATUS_LABELS: Record<RecorderStatus, string> = {
   idle: "Tap to speak",
-  listening: "Listening…",
-  processing: "Transcribing…",
+  recording: "Listening… tap to stop",
+  stopping: "Processing…",
 };
 
-export function MicButton({ phase, onPress }: MicButtonProps) {
-  const busy = phase !== "idle";
+const PERMISSION_HINT: Record<MicPermission, string> = {
+  unknown: "Mic access ready",
+  granted: "Mic access ready",
+  denied: "Mic blocked in browser settings",
+  unsupported: "Mic not supported in this browser",
+};
+
+export function MicButton({
+  status,
+  permission,
+  isSupported,
+  onStart,
+  onStop,
+}: MicButtonProps) {
+  const busy = status !== "idle";
+
+  const handlePress = () => {
+    if (!isSupported) return;
+    if (permission === "denied") return;
+    // Guard against clicking during stopping state
+    if (status === "stopping") return;
+    if (status === "recording") {
+      onStop();
+      return;
+    }
+    onStart();
+  };
 
   return (
-    <motion.button
-      type="button"
-      onClick={onPress}
-      whileTap={{ scale: busy ? 1 : 0.96 }}
-      disabled={busy}
-      className={`relative flex min-h-[96px] flex-1 items-center justify-center gap-4 rounded-full px-6 py-4 text-lg font-semibold text-slate-900 shadow-[0_15px_45px_rgba(125,230,194,0.6)] transition hover:shadow-[0_25px_75px_rgba(125,230,194,0.75)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 ${
-        busy
-          ? "bg-emerald-200/80 cursor-not-allowed"
-          : "bg-gradient-to-r from-emerald-200 to-sky-200"
-      }`}
-    >
-      <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white text-emerald-400">
-        <MicIcon />
-        {busy && (
-          <span className="absolute inset-0 animate-ping rounded-full bg-emerald-100" />
-        )}
-      </span>
-      <span>{LABELS[phase]}</span>
-    </motion.button>
+    <div className="flex flex-1 flex-col gap-2">
+      <motion.button
+        type="button"
+        onClick={handlePress}
+        whileTap={{ scale: busy ? 1 : 0.96 }}
+        disabled={permission === "denied" || !isSupported || status === "stopping"}
+        className={`relative flex min-h-[96px] flex-1 items-center justify-center gap-4 rounded-full px-6 py-4 text-lg font-semibold text-slate-900 shadow-[0_15px_45px_rgba(125,230,194,0.6)] transition hover:shadow-[0_25px_75px_rgba(125,230,194,0.75)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 ${
+          busy
+            ? "bg-emerald-200/80 cursor-pointer"
+            : "bg-gradient-to-r from-emerald-200 to-sky-200"
+        } ${permission === "denied" || !isSupported ? "opacity-60" : ""}`}
+      >
+        <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white text-emerald-400">
+          <MicIcon />
+          {busy && (
+            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-100" />
+          )}
+        </span>
+        <span>{STATUS_LABELS[status]}</span>
+      </motion.button>
+      <p className="text-center text-sm text-slate-500">
+        {PERMISSION_HINT[permission]}
+      </p>
+    </div>
   );
 }
 

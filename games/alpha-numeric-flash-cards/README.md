@@ -1,13 +1,13 @@
 # Alpha Numeric Flash Cards
 
-Kid-friendly flash cards that help toddlers call out digits and the English alphabet. The UI is optimized for iPad/iPhone browsers, features quick mode switching, and will soon stream mic audio to OpenAI Whisper for speech-to-text validation.
+Kid-friendly flash cards that help toddlers call out digits and the English alphabet. The UI is optimized for iPad/iPhone browsers, features quick mode switching, and now records spoken attempts locally so we can feed them to OpenAI Whisper in the next milestone.
 
 ## Tech Highlights
 
-- **Next.js 16 (App Router)** with TypeScript and Tailwind CSS 4 for fast hydration on mobile browsers.
+- **Next.js 14 (App Router)** with TypeScript and Tailwind CSS 4 for fast hydration on mobile browsers.
 - **Framer Motion** animations for delightful card swaps.
-- **Zustand-ready hooks** (`useFlashDeck`) to manage shuffled decks per mode.
-- **Vitest + Testing Library** for deterministic Fisher–Yates shuffle coverage.
+- **Recorder-aware hooks** (`useMicRecorder`) wrap the Web Audio API + MediaRecorder, exposing blobs that will be streamed to Whisper.
+- **Vitest + Testing Library** for deterministic Fisher–Yates shuffle coverage and time-format helpers.
 - Deployment target: **Vercel project `alpha-numeric-flash-cards`** (Preview for every branch, Production on `main`).
 
 ## Getting Started
@@ -32,15 +32,19 @@ pnpm build      # next build
 ```
 src/
   app/          → App Router entry + global styles
-  components/   → UI primitives (mode selector, card, mic button)
+  components/   → UI primitives (mode selector, card, mic button, attempt history)
   data/         → Static decks for numbers and letters
-  hooks/        → Deck + mic simulator hooks
+  hooks/        → Deck + mic recorder hooks
   lib/          → Deterministic shuffle + utilities
+  utils/        → Duration/format helpers
 ```
 
-### Placeholder Mic Workflow
+### Mic Workflow (Milestone 1)
 
-`useMicSimulator` animates the mic states (idle → listening → processing) so we can design the user experience before wiring up MediaRecorder + Whisper (Milestone 2).
+- `useMicRecorder` lazily requests `navigator.mediaDevices.getUserMedia`, manages `MediaRecorder`, clamps duration to 4 seconds, and emits `RecordingResult` objects containing the blob + object URL.
+- `MicButton` now toggles between start/stop states, surfaces permission/unsupported hints, and feeds the recorder hook.
+- `AttemptHistory` lists the freshest five attempts with inline audio playback so parents can review pronunciations before Whisper integration.
+- Helper utilities (`utils/duration.ts`) format timestamps and durations for friendly display.
 
 ## Environment Variables
 
