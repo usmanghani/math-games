@@ -14,4 +14,3 @@ artifacts/
 .DS_Store
 *.log
 .vercel
-.vercel-node-*
