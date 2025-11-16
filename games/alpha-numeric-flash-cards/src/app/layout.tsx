@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import { Baloo_2, Geist, Geist_Mono } from "next/font/google";
+import { Baloo_2, Inter, Space_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const mono = Space_Mono({
+  variable: "--font-space-mono",
   subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 const baloo = Baloo_2({
@@ -32,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${baloo.variable} bg-[#fff9ef] antialiased`}
+        className={`${inter.variable} ${mono.variable} ${baloo.variable} bg-[#fff9ef] antialiased`}
       >
         {children}
       </body>
