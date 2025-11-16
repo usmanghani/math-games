@@ -1,51 +1,98 @@
-# PR #6: Profile Setup & Management
+# PR #7: User Progress Store (Zustand)
 
-**Branch**: `feature/pr-6-profile-management`
+**Branch**: `feature/pr-7-user-progress-store`
 **Status**: Ready for Review
-**Base**: PR #5 (Login/Signup UI)
+**Base**: PR #6 (Profile Management)
 
 ## Overview
 
-Implements profile management allowing authenticated users to customize display name and avatar emoji with real-time validation.
+Implements client-side state management for user level progress using Zustand with localStorage persistence and automatic Supabase sync.
 
 ## Features Added
 
-- **/profile page** - Protected route for profile editing
-- **ProfileForm** - Fetches/updates profile with validation
-- **AvatarPicker** - Interactive emoji selector (80+ options)
-- Auto-creates profile on first visit
-- Real-time character counter (50 max)
-- Success/error feedback
+- **progressStore** - Zustand store with persist middleware
+- **Level Progress Tracking** - Unlock status, completion, best scores, streaks, attempts
+- **Auto-Unlock Logic** - Next level unlocks at 60% accuracy (3/5 correct)
+- **Offline Support** - localStorage persistence with Map serialization
+- **Auto-Sync** - Syncs to Supabase when user authenticated
+- **Utility Hooks** - `useProgress()` and `useLevelProgress()` for easy store access
 
 ## Key Decisions
 
-- **Display Name**: Friendly, flexible (not unique username)
-- **Emoji Avatars**: No hosting costs, instant, lightweight
-- **Auto-Create**: Seamless UX, no "not found" errors
-- **50 Char Limit**: Industry standard, prevents abuse
-- **TypeScript `any`**: Temporary until database types generated
+- **Zustand over Redux** - Simpler API, smaller bundle, no boilerplate
+- **Map Data Structure** - O(1) level lookup, efficient updates
+- **Persist Middleware** - Offline play, seamless page refreshes
+- **60% Threshold** - 3/5 correct to unlock next level (balanced progression)
+- **Auto-Sync** - Fire-and-forget updates, no loading states needed
+- **TypeScript `any`** - Temporary until database types generated
 
 ## Files Changed
 
-- `src/app/profile/page.tsx` (67 lines)
-- `src/components/profile/ProfileForm.tsx` (197 lines)  
-- `src/components/profile/AvatarPicker.tsx` (73 lines)
+- `src/stores/progressStore.ts` (257 lines)
+- `src/hooks/useProgress.ts` (84 lines)
+- `package.json` (added `zustand: 5.0.8`)
 
-**Total**: 337 lines
+**Total**: 341 lines
+
+## Architecture
+
+### Store State
+```typescript
+interface ProgressState {
+  userId: string | null
+  levels: Map<number, LevelProgress>
+  currentLevel: number
+  loading: boolean
+  error: string | null
+  lastSyncedAt: string | null
+}
+```
+
+### Level Progress
+```typescript
+interface LevelProgress {
+  levelNumber: number
+  isUnlocked: boolean
+  isCompleted: boolean
+  bestScore: number | null
+  bestStreak: number | null
+  attemptsCount: number
+  lastPlayedAt: string | null
+}
+```
+
+### Key Actions
+- `setUserId()` - Set user and load progress from Supabase
+- `loadProgress()` - Fetch all level data from database
+- `completeLevel()` - Update scores, auto-unlock next level
+- `unlockLevel()` - Manually unlock specific level
+- `syncWithServer()` - Manual sync trigger
+
+### Persistence Strategy
+
+**localStorage** (via Zustand persist):
+- Serializes Map to array: `Array.from(levels.entries())`
+- Deserializes on rehydration: `new Map(levels)`
+- Only persists: levels, currentLevel, userId
+
+**Supabase** (via auto-sync):
+- Updates on every level change when user authenticated
+- No blocking - optimistic updates with error logging
+- Gracefully handles offline mode
 
 ## Testing
 
 ✅ Build succeeds
-✅ Auth enforcement works
-✅ Profile auto-creation
-✅ CRUD operations functional
-✅ Validation working
-✅ Avatar selection persists
+✅ TypeScript compiles
+✅ Map serialization works
+✅ Auto-unlock at 60% accuracy
+✅ localStorage persistence functional
+✅ Supabase sync (when configured)
 
 ## Integration
 
-**Depends On**: PR #1 (DB), PR #4 (Auth), PR #5 (Login)
-**Enables**: PR #7-10 (User identity in gameplay)
+**Depends On**: PR #1 (DB), PR #4 (Auth), PR #6 (Profile)
+**Enables**: PR #8-10 (Level Selection, Game Integration, Leaderboards)
 
 ---
 
