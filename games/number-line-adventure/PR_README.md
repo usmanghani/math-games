@@ -1,98 +1,91 @@
-# PR #7: User Progress Store (Zustand)
+# PR #8: Level Selection UI
 
-**Branch**: `feature/pr-7-user-progress-store`
+**Branch**: `feature/pr-8-level-selection-ui`
 **Status**: Ready for Review
-**Base**: PR #6 (Profile Management)
+**Base**: PR #7 (User Progress Store)
 
 ## Overview
 
-Implements client-side state management for user level progress using Zustand with localStorage persistence and automatic Supabase sync.
+Implements visual level selection interface with lock/unlock states, completion badges, and real-time progress integration.
 
 ## Features Added
 
-- **progressStore** - Zustand store with persist middleware
-- **Level Progress Tracking** - Unlock status, completion, best scores, streaks, attempts
-- **Auto-Unlock Logic** - Next level unlocks at 60% accuracy (3/5 correct)
-- **Offline Support** - localStorage persistence with Map serialization
-- **Auto-Sync** - Syncs to Supabase when user authenticated
-- **Utility Hooks** - `useProgress()` and `useLevelProgress()` for easy store access
+- **/levels page** - Protected route for level selection
+- **LevelGrid** - Responsive grid layout (2-5 columns based on screen size)
+- **LevelCard** - Individual level cards with visual states
+- **Lock/Unlock States** - Visual indicators for level availability
+- **Completion Badges** - Checkmarks for completed levels
+- **Best Stats Display** - Shows best score and streak per level
+- **Hover Effects** - Interactive feedback on unlocked levels
 
 ## Key Decisions
 
-- **Zustand over Redux** - Simpler API, smaller bundle, no boilerplate
-- **Map Data Structure** - O(1) level lookup, efficient updates
-- **Persist Middleware** - Offline play, seamless page refreshes
-- **60% Threshold** - 3/5 correct to unlock next level (balanced progression)
-- **Auto-Sync** - Fire-and-forget updates, no loading states needed
-- **TypeScript `any`** - Temporary until database types generated
+- **Grid Layout** - Responsive: 2 cols (mobile), 3 (sm), 4 (md), 5 (lg+)
+- **Lock Icon** - 🔒 emoji for locked levels (no assets needed)
+- **Gradient Cards** - Blue-purple gradient for unlocked levels
+- **Disabled State** - Gray background for locked levels (not clickable)
+- **Progress Integration** - Auto-loads user progress on mount
+- **Direct Navigation** - Cards link to `/game?level={n}` when unlocked
 
 ## Files Changed
 
-- `src/stores/progressStore.ts` (257 lines)
-- `src/hooks/useProgress.ts` (84 lines)
-- `package.json` (added `zustand: 5.0.8`)
+- `src/app/levels/page.tsx` (67 lines)
+- `src/components/levels/LevelGrid.tsx` (42 lines)
+- `src/components/levels/LevelCard.tsx` (67 lines)
 
-**Total**: 341 lines
+**Total**: 176 lines
 
-## Architecture
+## Visual States
 
-### Store State
-```typescript
-interface ProgressState {
-  userId: string | null
-  levels: Map<number, LevelProgress>
-  currentLevel: number
-  loading: boolean
-  error: string | null
-  lastSyncedAt: string | null
-}
+### Locked Level
+- Gray background
+- 🔒 lock icon
+- "Locked" text
+- Not clickable
+- 60% opacity
+
+### Unlocked Level
+- Blue-purple gradient
+- Level number (large)
+- "Not played" text if no attempts
+- Hover: scale up, border highlight
+- Clickable → navigates to game
+
+### Completed Level
+- Same as unlocked
+- ✅ checkmark badge (top-right)
+- Best score: X/5
+- Best streak: X
+- Hover effects enabled
+
+## Component Architecture
+
+```
+/levels (page)
+  └── LevelGrid
+       └── LevelCard (×10)
 ```
 
-### Level Progress
-```typescript
-interface LevelProgress {
-  levelNumber: number
-  isUnlocked: boolean
-  isCompleted: boolean
-  bestScore: number | null
-  bestStreak: number | null
-  attemptsCount: number
-  lastPlayedAt: string | null
-}
-```
-
-### Key Actions
-- `setUserId()` - Set user and load progress from Supabase
-- `loadProgress()` - Fetch all level data from database
-- `completeLevel()` - Update scores, auto-unlock next level
-- `unlockLevel()` - Manually unlock specific level
-- `syncWithServer()` - Manual sync trigger
-
-### Persistence Strategy
-
-**localStorage** (via Zustand persist):
-- Serializes Map to array: `Array.from(levels.entries())`
-- Deserializes on rehydration: `new Map(levels)`
-- Only persists: levels, currentLevel, userId
-
-**Supabase** (via auto-sync):
-- Updates on every level change when user authenticated
-- No blocking - optimistic updates with error logging
-- Gracefully handles offline mode
+**Data Flow**:
+1. Page loads → `useRequireAuth()` checks authentication
+2. LevelGrid mounts → `useProgress()` loads progress from store
+3. Store auto-loads from Supabase if userId changes
+4. Cards render with current progress state
 
 ## Testing
 
 ✅ Build succeeds
 ✅ TypeScript compiles
-✅ Map serialization works
-✅ Auto-unlock at 60% accuracy
-✅ localStorage persistence functional
-✅ Supabase sync (when configured)
+✅ Responsive grid layout
+✅ Lock/unlock states render correctly
+✅ Completion badges display
+✅ Navigation links work
+✅ Progress store integration
 
 ## Integration
 
-**Depends On**: PR #1 (DB), PR #4 (Auth), PR #6 (Profile)
-**Enables**: PR #8-10 (Level Selection, Game Integration, Leaderboards)
+**Depends On**: PR #7 (Progress Store), PR #4 (Auth), PR #6 (Profile)
+**Enables**: PR #9 (Game Integration with Progress)
 
 ---
 
