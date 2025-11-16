@@ -7,7 +7,11 @@
     "dev": "pnpm --filter number-line-adventure dev",
     "build": "pnpm --filter number-line-adventure build",
     "lint": "pnpm --filter number-line-adventure lint",
-    "test": "pnpm --filter number-line-adventure test"
+    "test": "pnpm --filter number-line-adventure test",
+    "dev:alpha": "pnpm --filter alpha-numeric-flash-cards dev",
+    "build:alpha": "pnpm --filter alpha-numeric-flash-cards build",
+    "lint:alpha": "pnpm --filter alpha-numeric-flash-cards lint",
+    "test:alpha": "pnpm --filter alpha-numeric-flash-cards test"
   },
   "keywords": [
     "math",
@@ -16,5 +20,8 @@
   ],
   "author": "",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.18.0"
+  },
   "packageManager": "pnpm@10.11.0"
 }
