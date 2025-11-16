@@ -1,91 +1,109 @@
-# PR #8: Level Selection UI
+# PR #9: Game Integration with Progress
 
-**Branch**: `feature/pr-8-level-selection-ui`
+**Branch**: `feature/pr-9-game-integration`
 **Status**: Ready for Review
-**Base**: PR #7 (User Progress Store)
+**Base**: PR #8 (Level Selection UI)
 
 ## Overview
 
-Implements visual level selection interface with lock/unlock states, completion badges, and real-time progress integration.
+Connects the game engine with the progress tracking system, enabling level-specific gameplay, automatic progress saving, and seamless navigation between levels.
 
 ## Features Added
 
-- **/levels page** - Protected route for level selection
-- **LevelGrid** - Responsive grid layout (2-5 columns based on screen size)
-- **LevelCard** - Individual level cards with visual states
-- **Lock/Unlock States** - Visual indicators for level availability
-- **Completion Badges** - Checkmarks for completed levels
-- **Best Stats Display** - Shows best score and streak per level
-- **Hover Effects** - Interactive feedback on unlocked levels
+- **/game page** - Dynamic game page with URL-based level selection
+- **Level-specific gameplay** - Each level uses unique delta and range from config
+- **Progress auto-save** - Completes level in store after finishing 5 rounds
+- **Auto-unlock next level** - Unlocks next level at 60% accuracy (3/5 correct)
+- **Completion navigation** - Shows "Play again", "Next Level", and "Level Select" buttons
+- **Updated home page** - Navigation hub with auth-aware UI
 
 ## Key Decisions
 
-- **Grid Layout** - Responsive: 2 cols (mobile), 3 (sm), 4 (md), 5 (lg+)
-- **Lock Icon** - 🔒 emoji for locked levels (no assets needed)
-- **Gradient Cards** - Blue-purple gradient for unlocked levels
-- **Disabled State** - Gray background for locked levels (not clickable)
-- **Progress Integration** - Auto-loads user progress on mount
-- **Direct Navigation** - Cards link to `/game?level={n}` when unlocked
+- **URL params** - `/game?level=3` for direct level access and sharing
+- **Level config loading** - Uses `getLevelConfigWithFallback()` for offline support
+- **Auto-save timing** - Saves progress when session completes (not per round)
+- **Navigation options** - Three actions after completion for flexible UX
+- **Conditional "Next Level"** - Only shows if level is unlocked
+- **Success messaging** - Shows unlock notification if 60% accuracy achieved
 
 ## Files Changed
 
-- `src/app/levels/page.tsx` (67 lines)
-- `src/components/levels/LevelGrid.tsx` (42 lines)
-- `src/components/levels/LevelCard.tsx` (67 lines)
+- `src/app/game/page.tsx` (97 lines) - New game page with level loading
+- `src/components/GameClient.tsx` (267 lines) - Modified to accept level props
+  - Added `levelNumber` and `levelConfig` props
+  - Integrated `useProgress()` hook
+  - Replaced `generateProblem()` with `generateProblemFromLevel()`
+  - Added auto-save effect when session completes
+  - Updated completion UI with navigation buttons
+- `src/components/GameClient.css` (286 lines) - Added styles for action buttons
+- `src/app/page.tsx` (74 lines) - Changed to navigation hub
 
-**Total**: 176 lines
-
-## Visual States
-
-### Locked Level
-- Gray background
-- 🔒 lock icon
-- "Locked" text
-- Not clickable
-- 60% opacity
-
-### Unlocked Level
-- Blue-purple gradient
-- Level number (large)
-- "Not played" text if no attempts
-- Hover: scale up, border highlight
-- Clickable → navigates to game
-
-### Completed Level
-- Same as unlocked
-- ✅ checkmark badge (top-right)
-- Best score: X/5
-- Best streak: X
-- Hover effects enabled
+**Total**: ~180 new/modified lines
 
 ## Component Architecture
 
 ```
-/levels (page)
-  └── LevelGrid
-       └── LevelCard (×10)
+/game?level=3 (page)
+  ├── Load level config from Supabase/fallback
+  ├── Validate level number (1-10)
+  └── GameClient (levelNumber, levelConfig)
+       ├── useProgress() - Progress store integration
+       ├── useRouter() - Navigation after completion
+       ├── generateProblemFromLevel() - Level-specific problems
+       └── completeLevel() - Auto-save on finish
 ```
 
-**Data Flow**:
-1. Page loads → `useRequireAuth()` checks authentication
-2. LevelGrid mounts → `useProgress()` loads progress from store
-3. Store auto-loads from Supabase if userId changes
-4. Cards render with current progress state
+## Data Flow
+
+1. **Level Loading**:
+   - User clicks level card → Navigate to `/game?level=N`
+   - Game page reads URL param, validates (1-10)
+   - Fetches level config from Supabase (or uses DEFAULT_LEVELS)
+   - Passes config to GameClient
+
+2. **Gameplay**:
+   - GameClient generates problems using level's delta/range/operations
+   - User completes 5 rounds
+   - Session completes → Auto-saves via `completeLevel(levelNumber, score, streak)`
+   - Progress store updates best scores and unlocks next level if 60% accuracy
+
+3. **Navigation**:
+   - "Play again" → Restarts same level
+   - "Next Level →" → Navigates to `/game?level=${N+1}` (if unlocked)
+   - "Level Select" → Returns to `/levels`
+
+## Visual Changes
+
+### Game Header
+- Now shows: "Level {N} - Hopping by {delta}"
+- Provides context about current challenge
+
+### Completion Screen
+- **Success message**: Shows unlock notification if qualified
+- **Action buttons**: 3 buttons in flexbox (column on mobile, row on desktop)
+  - Play again (default gray)
+  - Next Level (green gradient, conditional)
+  - Level Select (gray secondary)
+
+### Home Page
+- Authenticated users: "Start Playing →" and "My Profile" buttons
+- Unauthenticated users: "Sign Up" and "Log In" buttons
 
 ## Testing
 
 ✅ Build succeeds
 ✅ TypeScript compiles
-✅ Responsive grid layout
-✅ Lock/unlock states render correctly
-✅ Completion badges display
-✅ Navigation links work
-✅ Progress store integration
+✅ Level loading from URL works
+✅ Level config fallback functional
+✅ Progress auto-saves on completion
+✅ Auto-unlock logic working (60% threshold)
+✅ Navigation buttons display correctly
+✅ Conditional "Next Level" button works
 
 ## Integration
 
-**Depends On**: PR #7 (Progress Store), PR #4 (Auth), PR #6 (Profile)
-**Enables**: PR #9 (Game Integration with Progress)
+**Depends On**: PR #8 (Level Selection), PR #7 (Progress Store), PR #1 (Levels Config)
+**Enables**: PR #10 (Leaderboards/Social), future multiplayer features
 
 ---
 

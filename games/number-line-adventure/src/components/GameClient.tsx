@@ -1,13 +1,20 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import EquationCard from './EquationCard'
 import NumberLine from './NumberLine'
-import { NumberLineProblem, generateProblem } from '../lib/problem'
+import { NumberLineProblem, generateProblemFromLevel } from '../lib/problem'
+import { LevelConfig } from '../lib/levels'
+import { useProgress } from '@/hooks/useProgress'
 import './GameClient.css'
 
-const RANGE = { min: 0, max: 20 }
 const TOTAL_ROUNDS = 5
+
+interface GameClientProps {
+  levelNumber: number
+  levelConfig: LevelConfig
+}
 
 const POSITIVE_FEEDBACK = [
   'Beautiful hop! That carrot is yours.',
@@ -24,8 +31,10 @@ const GROWTH_FEEDBACK = [
 const pickMessage = (messages: string[], seed: number) =>
   messages[seed % messages.length]
 
-export default function GameClient() {
-  const [problem, setProblem] = useState<NumberLineProblem>(() => generateProblem(RANGE))
+export default function GameClient({ levelNumber, levelConfig }: GameClientProps) {
+  const router = useRouter()
+  const { completeLevel, isLevelUnlocked } = useProgress()
+  const [problem, setProblem] = useState<NumberLineProblem>(() => generateProblemFromLevel(levelConfig))
   const [selected, setSelected] = useState<number | null>(null)
   const [showResult, setShowResult] = useState(false)
   const [roundIndex, setRoundIndex] = useState(0)
@@ -34,6 +43,15 @@ export default function GameClient() {
   const [bestStreak, setBestStreak] = useState(0)
   const [history, setHistory] = useState<boolean[]>([])
   const [sessionComplete, setSessionComplete] = useState(false)
+  const [progressSaved, setProgressSaved] = useState(false)
+
+  // Save progress when session completes
+  useEffect(() => {
+    if (sessionComplete && !progressSaved) {
+      completeLevel(levelNumber, correctCount, bestStreak)
+      setProgressSaved(true)
+    }
+  }, [sessionComplete, progressSaved, completeLevel, levelNumber, correctCount, bestStreak])
 
   const isCorrect = selected !== null && selected === problem.answer
   const progress = Math.min(history.length / TOTAL_ROUNDS, 1) * 100
@@ -59,7 +77,7 @@ export default function GameClient() {
   }
 
   const resetForNextProblem = () => {
-    setProblem(generateProblem(RANGE))
+    setProblem(generateProblemFromLevel(levelConfig))
     setSelected(null)
     setShowResult(false)
   }
@@ -71,8 +89,13 @@ export default function GameClient() {
     setBestStreak(0)
     setHistory([])
     setSessionComplete(false)
+    setProgressSaved(false)
     resetForNextProblem()
   }
+
+  const nextLevelNumber = levelNumber + 1
+  const isNextLevelUnlocked = isLevelUnlocked(nextLevelNumber)
+  const hasNextLevel = levelNumber < 10
 
   const handleNext = () => {
     if (!showResult) return
@@ -121,7 +144,7 @@ export default function GameClient() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <p className="eyebrow">Milestone 1 prototype</p>
+        <p className="eyebrow">Level {levelNumber} {levelConfig.delta > 2 ? `- Hopping by ${levelConfig.delta}` : ''}</p>
         <h1>Number Line Adventure</h1>
         <p className="subtitle">
           Strengthen gentle addition and subtraction by tracing our bunny&apos;s hops on a colorful number line.
@@ -179,9 +202,32 @@ export default function GameClient() {
                 You solved {correctCount} of {TOTAL_ROUNDS} challenges. Your longest streak was {bestStreak}{' '}
                 correct hop{bestStreak === 1 ? '' : 's'}.
               </p>
-              <button className="next" onClick={restartSession}>
-                Play again
-              </button>
+              {correctCount >= 3 && hasNextLevel && (
+                <p className="success-message">
+                  {isNextLevelUnlocked
+                    ? `Great job! Level ${nextLevelNumber} is now unlocked!`
+                    : `Keep practicing to unlock Level ${nextLevelNumber}!`}
+                </p>
+              )}
+              <div className="action-buttons">
+                <button className="next" onClick={restartSession}>
+                  Play again
+                </button>
+                {hasNextLevel && isNextLevelUnlocked && (
+                  <button
+                    className="next next--primary"
+                    onClick={() => router.push(`/game?level=${nextLevelNumber}`)}
+                  >
+                    Next Level →
+                  </button>
+                )}
+                <button
+                  className="next next--secondary"
+                  onClick={() => router.push('/levels')}
+                >
+                  Level Select
+                </button>
+              </div>
             </div>
           ) : (
             <>
