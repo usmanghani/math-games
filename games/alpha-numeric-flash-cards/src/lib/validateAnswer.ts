@@ -121,18 +121,16 @@ export function validateAnswer(
     });
   }
 
-  // Check if transcription matches any expected answer
-  // Also check if the transcription contains the expected answer as a word
-  for (const expected of expectedAnswers) {
-    if (normalizedTranscription === expected) {
-      return true;
-    }
+  // First, check for an exact match of the whole transcription.
+  if (expectedAnswers.includes(normalizedTranscription)) {
+    return true;
+  }
 
-    // Check if the expected answer is a complete word in the transcription
-    const wordBoundaryRegex = new RegExp(`\\b${expected}\\b`);
-    if (wordBoundaryRegex.test(normalizedTranscription)) {
-      return true;
-    }
+  // If no exact match, check if the transcription contains any of the
+  // expected answers as a whole word.
+  const wordBoundaryRegex = new RegExp('\\b(' + expectedAnswers.join('|') + ')\\b');
+  if (wordBoundaryRegex.test(normalizedTranscription)) {
+    return true;
   }
 
   return false;

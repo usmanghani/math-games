@@ -82,3 +82,21 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+/**
+ * OPTIONS /api/transcribe
+ *
+ * Checks if the transcription service is available (i.e., API key is configured).
+ * Used by the client to conditionally enable transcription features.
+ */
+export async function OPTIONS() {
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json(
+      { error: "OpenAI API key not configured" },
+      { status: 500 }
+    );
+  }
+
+  // Return 204 No Content to indicate success
+  return new NextResponse(null, { status: 204 });
+}
