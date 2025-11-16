@@ -15,8 +15,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index for faster lookups
-CREATE INDEX IF NOT EXISTS profiles_id_idx ON profiles(id);
+-- Note: No explicit index needed on id - PRIMARY KEY creates one automatically
 
 -- Trigger to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -52,8 +51,7 @@ CREATE TABLE IF NOT EXISTS level_definitions (
   CONSTRAINT valid_accuracy CHECK (required_accuracy >= 0 AND required_accuracy <= 1)
 );
 
--- Index for faster level lookups
-CREATE INDEX IF NOT EXISTS level_definitions_level_number_idx ON level_definitions(level_number);
+-- Note: No explicit index needed on level_number - UNIQUE constraint creates one automatically
 
 -- ============================================
 -- USER PROGRESS TABLE
@@ -86,7 +84,7 @@ CREATE TABLE IF NOT EXISTS user_progress (
 -- Indexes for faster queries
 CREATE INDEX IF NOT EXISTS user_progress_user_id_idx ON user_progress(user_id);
 CREATE INDEX IF NOT EXISTS user_progress_level_number_idx ON user_progress(level_number);
-CREATE INDEX IF NOT EXISTS user_progress_user_level_idx ON user_progress(user_id, level_number);
+-- Note: No explicit composite index needed - UNIQUE(user_id, level_number) creates one automatically
 
 -- Trigger to automatically update updated_at timestamp
 CREATE TRIGGER update_user_progress_updated_at
@@ -124,10 +122,9 @@ CREATE INDEX IF NOT EXISTS game_sessions_completed_at_idx ON game_sessions(compl
 
 -- Enable RLS on all tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE level_definitions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE game_sessions ENABLE ROW LEVEL SECURITY;
-
--- Note: level_definitions is public (no RLS needed)
 
 -- Profiles policies
 CREATE POLICY "Users can view own profile"
@@ -142,6 +139,11 @@ CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
+
+-- Level definitions policies (read-only for all authenticated users)
+CREATE POLICY "Anyone can view level definitions"
+  ON level_definitions FOR SELECT
+  USING (true);
 
 -- User progress policies
 CREATE POLICY "Users can view own progress"
@@ -177,6 +179,11 @@ CREATE POLICY "Users can insert own sessions"
 CREATE OR REPLACE FUNCTION initialize_user_progress(new_user_id UUID)
 RETURNS void AS $$
 BEGIN
+  -- Security: Ensure caller can only initialize their own progress
+  IF auth.uid() != new_user_id THEN
+    RAISE EXCEPTION 'Cannot initialize progress for another user';
+  END IF;
+
   INSERT INTO user_progress (user_id, level_number, is_unlocked, unlocked_at)
   SELECT
     new_user_id,
@@ -186,7 +193,7 @@ BEGIN
   FROM level_definitions
   ON CONFLICT (user_id, level_number) DO NOTHING;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Function to unlock next level based on performance
 -- Called after a game session is saved
@@ -200,7 +207,13 @@ DECLARE
   v_required_accuracy DECIMAL;
   v_achieved_accuracy DECIMAL;
   v_next_level INTEGER;
+  v_rows_updated INTEGER;
 BEGIN
+  -- Security: Ensure caller can only unlock their own levels
+  IF auth.uid() != p_user_id THEN
+    RAISE EXCEPTION 'Cannot unlock levels for another user';
+  END IF;
+
   -- Get required accuracy for current level
   SELECT required_accuracy INTO v_required_accuracy
   FROM level_definitions
@@ -223,9 +236,11 @@ BEGIN
       AND level_number = v_next_level
       AND is_unlocked = FALSE;
 
-    RETURN TRUE;
+    -- Only return TRUE if a row was actually updated
+    GET DIAGNOSTICS v_rows_updated = ROW_COUNT;
+    RETURN v_rows_updated > 0;
   END IF;
 
   RETURN FALSE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
