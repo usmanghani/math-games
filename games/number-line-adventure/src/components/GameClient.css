@@ -241,3 +241,45 @@
     align-items: stretch;
   }
 }
+
+/* Action buttons container */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.next--primary {
+  background: linear-gradient(135deg, #4ade80, #34d399);
+  font-weight: 700;
+}
+
+.next--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.next--secondary {
+  background: #6b7280;
+}
+
+.next--secondary:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+.success-message {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  border-radius: 12px;
+  color: #166534;
+  font-weight: 600;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .action-buttons {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
