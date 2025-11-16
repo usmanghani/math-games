@@ -6,14 +6,34 @@ import { ModeSelector } from "@/components/ModeSelector";
 import { ParentTips } from "@/components/ParentTips";
 import { ProgressDots } from "@/components/ProgressDots";
 import { MicButton } from "@/components/MicButton";
+import { AttemptHistory, Attempt, toAttempt } from "@/components/AttemptHistory";
 import { useFlashDeck } from "@/hooks/useFlashDeck";
-import { MicPhase, useMicSimulator } from "@/hooks/useMicSimulator";
-import { useState } from "react";
+import { MicPermission, RecorderStatus, useMicRecorder } from "@/hooks/useMicRecorder";
+import { useEffect, useState } from "react";
 
 export function Playground() {
   const [mode, setMode] = useState<CardMode>("numbers");
   const { currentCard, position, total, advance, reshuffle } = useFlashDeck(mode);
-  const { phase, durationMs, start } = useMicSimulator();
+  const recorder = useMicRecorder();
+  const [attempts, setAttempts] = useState<Attempt[]>([]);
+
+  useEffect(() => {
+    const recording = recorder.lastRecording;
+    if (!recording) return;
+    const timeout = setTimeout(() => {
+      setAttempts((prev) => {
+        const next = [
+          toAttempt(recording, {
+            id: currentCard.id,
+            label: currentCard.label,
+          }),
+          ...prev,
+        ];
+        return next.slice(0, 5);
+      });
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, [recorder.lastRecording, currentCard.id, currentCard.label]);
 
   return (
     <section className="grid gap-6 lg:grid-cols-[minmax(0,280px)_1fr]">
@@ -22,7 +42,11 @@ export function Playground() {
           setMode(nextMode);
           reshuffle();
         }} />
-        <CaptureStatus phase={phase} durationMs={durationMs} />
+        <CaptureStatus
+          status={recorder.status}
+          durationMs={recorder.durationMs}
+          permission={recorder.permission}
+        />
         <ParentTips />
       </div>
       <div className="rounded-[44px] border border-white/60 bg-white/90 p-6 shadow-[0_30px_120px_rgba(151,173,203,0.45)]">
@@ -30,7 +54,13 @@ export function Playground() {
           <FlashCardDisplay card={currentCard} />
           <ProgressDots index={position - 1} total={total} />
           <div className="flex flex-col gap-4 md:flex-row">
-            <MicButton phase={phase} onPress={start} />
+            <MicButton
+              status={recorder.status}
+              permission={recorder.permission}
+              isSupported={recorder.isSupported}
+              onStart={recorder.startRecording}
+              onStop={recorder.stopRecording}
+            />
             <button
               type="button"
               onClick={advance}
@@ -39,16 +69,19 @@ export function Playground() {
               Next card
             </button>
           </div>
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/80 px-4 py-3 text-sm text-slate-500">
-            <span>Mic + Whisper integration arrives in Milestone 2.</span>
-            <button
-              type="button"
-              onClick={reshuffle}
-              className="rounded-full bg-white px-4 py-1 text-sm font-semibold text-slate-700 shadow"
-            >
-              Reshuffle deck
-            </button>
-          </div>
+          <AttemptHistory
+            attempts={attempts}
+            pending={recorder.status === "recording" || recorder.status === "stopping"}
+            error={recorder.error}
+            permission={recorder.permission}
+          />
+          <button
+            type="button"
+            onClick={reshuffle}
+            className="self-start rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow transition hover:-translate-y-0.5 hover:border-emerald-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100"
+          >
+            Reshuffle deck
+          </button>
         </div>
       </div>
     </section>
@@ -56,33 +89,43 @@ export function Playground() {
 }
 
 function CaptureStatus({
-  phase,
+  status,
   durationMs,
+  permission,
 }: {
-  phase: MicPhase;
+  status: RecorderStatus;
+  permission: MicPermission;
   durationMs: number;
 }) {
   const durationSeconds = (durationMs / 1000).toFixed(1);
-  const texts: Record<MicPhase, { title: string; helper: string }> = {
+  const texts: Record<string, { title: string; helper: string }> = {
     idle: {
       title: "Mic idle",
       helper: "Tap the mint button to start listening.",
     },
-    listening: {
-      title: "Listening…",
+    recording: {
+      title: "Recording…",
       helper: "Keep speaking clearly and slowly.",
     },
-    processing: {
+    stopping: {
       title: "Transcribing…",
       helper: "We are comparing your child’s answer.",
     },
   };
 
+  const activeText = texts[status] ?? texts.idle;
+
   return (
     <div className="rounded-3xl border border-slate-100 bg-white/90 p-4 shadow-[0_12px_60px_rgba(209,224,255,0.45)]">
-      <p className="text-sm font-medium text-slate-500">{texts[phase].title}</p>
+      <p className="text-sm font-medium text-slate-500">{activeText.title}</p>
       <p className="text-2xl font-semibold text-slate-900">{durationSeconds}s</p>
-      <p className="text-sm text-slate-500">{texts[phase].helper}</p>
+      <p className="text-sm text-slate-500">{activeText.helper}</p>
+      {permission === "denied" && (
+        <p className="mt-2 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-600">
+          Microphone permissions are blocked. Please enable them and refresh the
+          page.
+        </p>
+      )}
     </div>
   );
 }
