@@ -1,6 +1,6 @@
 'use client';
 
-import { CardMode } from "@/data/cards";
+import { CardMode, FlashCard } from "@/data/cards";
 import { FlashCardDisplay } from "@/components/FlashCardDisplay";
 import { ModeSelector } from "@/components/ModeSelector";
 import { ParentTips } from "@/components/ParentTips";
@@ -9,6 +9,8 @@ import { MicButton } from "@/components/MicButton";
 import { AttemptHistory, Attempt, toAttempt } from "@/components/AttemptHistory";
 import { useFlashDeck } from "@/hooks/useFlashDeck";
 import { MicPermission, RecorderStatus, useMicRecorder } from "@/hooks/useMicRecorder";
+import { transcribeAudio } from "@/lib/transcription";
+import { validateAnswer, getExpectedAnswer } from "@/lib/validateAnswer";
 import { useEffect, useState, useRef } from "react";
 
 export function Playground() {
@@ -16,7 +18,7 @@ export function Playground() {
   const { currentCard, position, total, advance, reshuffle } = useFlashDeck(mode);
   const recorder = useMicRecorder();
   const [attempts, setAttempts] = useState<Attempt[]>([]);
-  const cardForRecordingRef = useRef<{ id: string; label: string } | null>(null);
+  const cardForRecordingRef = useRef<FlashCard | null>(null);
 
   useEffect(() => {
     const recording = recorder.lastRecording;
@@ -25,11 +27,68 @@ export function Playground() {
     const card = cardForRecordingRef.current;
     cardForRecordingRef.current = null; // Consume the ref
 
-    setAttempts((prev) => {
-      const next = [toAttempt(recording, card), ...prev];
-      return next.slice(0, 5);
-    });
+    // Create initial attempt with processing state
+    const attempt: Attempt = {
+      ...toAttempt(recording, { id: card.id, label: card.label }),
+      isProcessing: true,
+      transcription: undefined,
+      isCorrect: undefined,
+    };
+
+    // Add attempt to list immediately
+    const attemptId = attempt.id;
+    setAttempts((prev) => [attempt, ...prev].slice(0, 5));
+
+    // Start transcription process
+    transcribeAndValidate(recording.blob, card, attemptId);
   }, [recorder.lastRecording]);
+
+  // Transcribe audio and validate answer
+  async function transcribeAndValidate(
+    audioBlob: Blob,
+    card: FlashCard,
+    attemptId: string
+  ) {
+    try {
+      // Call transcription API
+      const transcription = await transcribeAudio(audioBlob);
+
+      // Validate the answer
+      const isCorrect = validateAnswer(transcription, card);
+      const expectedAnswer = isCorrect ? undefined : getExpectedAnswer(card);
+
+      // Update the attempt with results
+      setAttempts((prev) =>
+        prev.map((a) =>
+          a.id === attemptId
+            ? {
+                ...a,
+                isProcessing: false,
+                transcription,
+                isCorrect,
+                expectedAnswer,
+              }
+            : a
+        )
+      );
+    } catch (error) {
+      console.error("Transcription failed:", error);
+
+      // Update attempt with error
+      setAttempts((prev) =>
+        prev.map((a) =>
+          a.id === attemptId
+            ? {
+                ...a,
+                isProcessing: false,
+                transcriptionError:
+                  error instanceof Error ? error.message : "Transcription failed",
+              }
+            : a
+        )
+      );
+    }
+  }
 
   return (
     <section className="grid gap-6 lg:grid-cols-[minmax(0,280px)_1fr]">
@@ -55,7 +114,7 @@ export function Playground() {
               permission={recorder.permission}
               isSupported={recorder.isSupported}
               onStart={() => {
-                cardForRecordingRef.current = { id: currentCard.id, label: currentCard.label };
+                cardForRecordingRef.current = currentCard;
                 recorder.startRecording();
               }}
               onStop={recorder.stopRecording}

@@ -10,6 +10,12 @@ export interface Attempt {
   durationMs: number;
   createdAt: number;
   url: string;
+  // Transcription fields
+  transcription?: string;
+  isCorrect?: boolean;
+  isProcessing?: boolean;
+  transcriptionError?: string;
+  expectedAnswer?: string;
 }
 
 interface AttemptHistoryProps {
@@ -59,8 +65,25 @@ export function AttemptHistory({
               className="rounded-2xl border border-slate-100 bg-white px-3 py-2 text-sm shadow-[0_10px_25px_rgba(15,23,42,0.06)]"
             >
               <div className="flex items-center justify-between text-slate-700">
-                <div>
-                  <p className="font-semibold">{attempt.label}</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold">{attempt.label}</p>
+                    {attempt.isProcessing && (
+                      <span className="animate-pulse text-xs font-semibold text-blue-500">
+                        Processing...
+                      </span>
+                    )}
+                    {!attempt.isProcessing && attempt.isCorrect !== undefined && (
+                      <span
+                        className={`text-lg ${
+                          attempt.isCorrect ? "text-green-500" : "text-rose-500"
+                        }`}
+                        title={attempt.isCorrect ? "Correct!" : "Try again"}
+                      >
+                        {attempt.isCorrect ? "✓" : "✗"}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-400">
                     {new Date(attempt.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
@@ -72,6 +95,31 @@ export function AttemptHistory({
                   {formatDuration(attempt.durationMs)}
                 </span>
               </div>
+
+              {/* Transcription results */}
+              {attempt.transcription && (
+                <div className="mt-2 rounded-lg bg-slate-50 px-2 py-1.5">
+                  <p className="text-xs font-medium text-slate-500">You said:</p>
+                  <p className="text-sm font-semibold text-slate-700">
+                    "{attempt.transcription}"
+                  </p>
+                  {!attempt.isCorrect && attempt.expectedAnswer && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Expected: {attempt.expectedAnswer}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Transcription error */}
+              {attempt.transcriptionError && (
+                <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5">
+                  <p className="text-xs text-amber-700">
+                    Could not transcribe audio
+                  </p>
+                </div>
+              )}
+
               <audio
                 className="mt-2 w-full"
                 controls
