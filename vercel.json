@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "corepack enable pnpm && pnpm install",
-  "buildCommand": "corepack enable pnpm && pnpm --filter alpha-numeric-flash-cards build",
+  "installCommand": "bash scripts/use-node.sh pnpm install",
+  "buildCommand": "bash scripts/use-node.sh pnpm --filter alpha-numeric-flash-cards build",
   "ignoreCommand": "exit 1",
   "outputDirectory": "games/alpha-numeric-flash-cards/.next",
   "framework": "nextjs"
