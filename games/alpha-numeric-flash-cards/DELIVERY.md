@@ -1,27 +1,27 @@
 # Alpha Numeric Flash Cards — Delivery Workflow
 
 ## Branching & Worktrees
-- Each PR lives in its own worktree rooted under `/Users/usmanaven.com/math-games-worktrees`.
-- Naming pattern: `/pr-<n>-<slug>` mapped to branch `feature/pr-<n>-<slug>` based on `main`.
-- No direct edits on `/Users/usmanaven.com/math-games`; work happens inside the worktree to avoid clobbering other agents.
+- Each PR lives in its own worktree under `/Users/usmanaven.com/math-games-worktrees` to avoid stepping on other agents.
+- Naming convention: `/pr-<n>-<slug>` mapped to branch `feature/pr-<n>-<slug>` forked from `main`.
+- No direct commits inside `/Users/usmanaven.com/math-games`; always work within the worktree for your PR.
 
-## PR Structure
-1. **Small Scope**: Target 1 milestone slice per PR (e.g., scaffold, mic hook, API route).
-2. **Tests**: Include Vitest/unit or integration tests covering the change. For UI-only adjustments, add Playwright smoke cases.
-3. **Docs**: Update `PLAN.md`, `PROGRESS.md` (once created), or READMEs when behavior shifts.
-4. **Linkage**: Reference tracking Issue/Project card (GitHub Project: `@usmanghani's Alpha Numeric Flash Cards`, #2). Ping reviewers via `@codex` when ready.
+## PR Expectations
+1. **Small Scope** — target one milestone slice (scaffold, mic hook, Whisper API, etc.).
+2. **Tests** — add or update Vitest / Testing Library coverage for every change; Playwright flows join once we wire mic + Whisper.
+3. **Docs** — update `PLAN.md`, `PROGRESS.md` (TBD), and README sections when behavior shifts.
+4. **Linkage** — every PR references the GitHub Project `@usmanghani's Alpha Numeric Flash Cards` (Project #2) and Issue tracker entries. Tag `@codex` for code review.
 
 ## Vercel Preview Verification
-1. Push branch → Vercel auto-creates Preview deployment.
-2. Wait for `deployment-ready` status in PR or run `vercel status <url>` if needed.
+1. Push branch → Vercel automatically spins up a Preview deployment.
+2. Wait for the Preview URL on the PR (or run `vercel status <preview-url>` if impatient).
 3. Manually test:
-   - Load `/` on desktop + iPhone/iPad viewports.
-   - Exercise any new API route via browser or `curl` (expect 2xx, correct payload).
-   - Verify mic prompts/UI flows impacted by changes.
-4. Attach a short checklist to the PR description summarizing the preview URL + manual results.
+   - Desktop + iPhone/iPad breakpoints.
+   - Any new API routes via browser/curl.
+   - Mic UI flows touched in the PR.
+4. Summarize the Preview URL + manual checks in the PR description.
 
 ## Release Flow
-- After approval, merge to `main`; GitHub Actions + Vercel promote to Production.
-- Tag board items/Issues as `Done` once production confirm.
+- After approval, merge to `main`; Vercel promotes Production.
+- Mark the corresponding GitHub Project item as `Done` only after Production verification.
 
-This workflow keeps deployments testable per-PR and ensures we always validate the Vercel preview before merging.
+This guardrail keeps PRs isolated, auditable, and always validated against a live Vercel preview before merging.

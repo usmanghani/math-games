@@ -93,7 +93,7 @@
    - Implement card data + shuffle utilities with placeholder UI.
 2. **Milestone 1 — Core Gameplay Loop (1 day)**
    - Build mode selector + deck progression, progress dots, confetti overlay.
-   - Implement `useMicRecorder` hook with dummy transcription (mock) + UI states.
+   - Implement `useMicRecorder` hook with MediaRecorder + UI states (✅ delivers short audio blobs + permission handling).
    - Add Playwright smoke test (mode selection, card advance) and Vitest for shuffle utils.
 3. **Milestone 2 — Whisper Integration (1–1.5 days)**
    - Build `/api/transcribe` route, integrate OpenAI SDK, handle streaming uploads + error states.
@@ -119,7 +119,7 @@
 
 ## Deployment & Ops
 - Use `.env.local` for `OPENAI_API_KEY`, `NEXT_PUBLIC_APP_BASE_URL`.
-- Provision a dedicated Vercel project targeting `games/alpha-numeric-flash-cards` with `pnpm install && pnpm build` and `next build` outputs; wire production + preview domains before feature work begins.
+- Provision a dedicated Vercel project targeting `games/alpha-numeric-flash-cards` with `pnpm install && pnpm build` and `next build` outputs; wire production + preview domains before feature work begins (✅ linked as `alpha-numeric-flash-cards`).
 - Store environment variables (`OPENAI_API_KEY`, `NEXT_PUBLIC_APP_BASE_URL`) in Vercel project settings so the `/api/transcribe` route never exposes keys client-side.
 - Monitor API route latency via Vercel logs; add simple health endpoint returning build info.
 - Provide README instructions for parents to run locally + configure keys, plus deployment notes for Vercel (expected Node version, env var names).
