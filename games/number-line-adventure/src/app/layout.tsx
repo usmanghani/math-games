@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito, JetBrains_Mono } from "next/font/google";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 
 const sans = Nunito({
@@ -32,7 +33,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${sans.variable} ${mono.variable} antialiased`}>
         <ErrorBoundary>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ErrorBoundary>
       </body>
     </html>
