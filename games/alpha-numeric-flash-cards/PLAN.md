@@ -1,4 +1,4 @@
-# Alpha Numeric Flash Cards — Implementation Plan
+# Speech Flash Cards — Implementation Plan
 
 ## Vision & Audience
 - Build a browser-based flash card experience that helps a three-year-old confidently recognize numbers and the English alphabet.
@@ -119,7 +119,7 @@
 
 ## Deployment & Ops
 - Use `.env.local` for `OPENAI_API_KEY`, `NEXT_PUBLIC_APP_BASE_URL`.
-- Provision a dedicated Vercel project targeting `games/alpha-numeric-flash-cards` with `pnpm install && pnpm --filter alpha-numeric-flash-cards build`; wire production + preview domains before feature work begins.
+- Provision a dedicated Vercel project targeting `games/alpha-numeric-flash-cards` with `pnpm install && pnpm build` and `next build` outputs; wire production + preview domains before feature work begins.
 - Store environment variables (`OPENAI_API_KEY`, `NEXT_PUBLIC_APP_BASE_URL`) in Vercel project settings so the `/api/transcribe` route never exposes keys client-side.
 - Monitor API route latency via Vercel logs; add simple health endpoint returning build info.
 - Provide README instructions for parents to run locally + configure keys, plus deployment notes for Vercel (expected Node version, env var names).
