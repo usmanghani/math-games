@@ -48,11 +48,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (session) {
-        console.log('Session restored from storage:', session.user.email)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Session restored from storage:', session.user.email)
+        }
         setSession(session)
         setUser(session.user)
       } else {
-        console.log('No existing session found')
+        if (process.env.NODE_ENV === 'development') {
+          console.log('No existing session found')
+        }
       }
       setLoading(false)
     })
@@ -61,16 +65,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Auth state changed:', event, session?.user?.email)
+      }
 
       // Update state based on auth event
       setSession(session)
       setUser(session?.user ?? null)
-
-      // Ensure loading is false after any auth change
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-        setLoading(false)
-      }
     })
 
     return () => subscription.unsubscribe()
@@ -80,11 +81,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // This ensures progress is loaded/saved for authenticated users
   useEffect(() => {
     if (user?.id) {
-      console.log('Syncing user ID with progress store:', user.id)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Syncing user ID with progress store:', user.id)
+      }
       setUserId(user.id)
     } else if (user === null) {
       // User signed out, clear user ID from progress store
-      console.log('Clearing user ID from progress store')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Clearing user ID from progress store')
+      }
       setUserId(null)
     }
   }, [user, setUserId])

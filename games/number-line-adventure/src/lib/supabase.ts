@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
 
 // Supabase client configuration
@@ -15,10 +15,12 @@ export function isSupabaseConfigured(): boolean {
 // Create a single supabase client for interacting with your database
 // Note: Only create the client if properly configured to avoid "failed to fetch" errors
 // If not configured, create a placeholder client that won't make network requests
-export const supabase = isSupabaseConfigured()
+export const supabase = (isSupabaseConfigured()
   ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         // Persist session in localStorage so users stay logged in across page refreshes
+        // SECURITY NOTE: localStorage is accessible to JavaScript, creating XSS vulnerability risk.
+        // For production apps with sensitive data, consider implementing httpOnly cookies instead.
         persistSession: true,
         // Automatically refresh access tokens before they expire
         autoRefreshToken: true,
@@ -26,8 +28,7 @@ export const supabase = isSupabaseConfigured()
         detectSessionInUrl: true,
         // Use localStorage for session storage (default, but being explicit)
         storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        // More aggressive token refresh to prevent session expiry
-        // Refresh 60 seconds before expiry instead of default 10 seconds
+        // Custom storage key for auth tokens
         storageKey: 'supabase-auth-token',
       },
     })
@@ -43,7 +44,7 @@ export const supabase = isSupabaseConfigured()
           detectSessionInUrl: false,
         },
       }
-    )
+    )) as SupabaseClient<Database>
 
 // Helper function to throw a helpful error if Supabase is not configured
 export function requireSupabase(): void {
