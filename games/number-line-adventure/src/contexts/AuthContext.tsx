@@ -61,16 +61,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string) => {
     if (!isConfigured) {
       return {
-        error: new Error('Supabase is not configured') as AuthError,
+        error: {
+          message: 'Authentication service is currently unavailable. Please try again later or contact support.',
+          name: 'AuthConfigError',
+          status: 500,
+        } as AuthError,
       }
     }
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      })
 
-    return { error }
+      return { error }
+    } catch (err) {
+      // Handle network errors gracefully
+      console.error('Sign up error:', err)
+      return {
+        error: {
+          message: 'Unable to connect to authentication service. Please check your internet connection and try again.',
+          name: 'NetworkError',
+          status: 0,
+        } as AuthError,
+      }
+    }
   }
 
   /**
@@ -79,16 +95,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     if (!isConfigured) {
       return {
-        error: new Error('Supabase is not configured') as AuthError,
+        error: {
+          message: 'Authentication service is currently unavailable. Please try again later or contact support.',
+          name: 'AuthConfigError',
+          status: 500,
+        } as AuthError,
       }
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    return { error }
+      return { error }
+    } catch (err) {
+      // Handle network errors gracefully
+      console.error('Sign in error:', err)
+      return {
+        error: {
+          message: 'Unable to connect to authentication service. Please check your internet connection and try again.',
+          name: 'NetworkError',
+          status: 0,
+        } as AuthError,
+      }
+    }
   }
 
   /**
@@ -97,13 +129,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     if (!isConfigured) {
       return {
-        error: new Error('Supabase is not configured') as AuthError,
+        error: {
+          message: 'Authentication service is currently unavailable. Please try again later or contact support.',
+          name: 'AuthConfigError',
+          status: 500,
+        } as AuthError,
       }
     }
 
-    const { error } = await supabase.auth.signOut()
+    try {
+      const { error } = await supabase.auth.signOut()
 
-    return { error }
+      return { error }
+    } catch (err) {
+      // Handle network errors gracefully
+      console.error('Sign out error:', err)
+      return {
+        error: {
+          message: 'Unable to connect to authentication service. Please check your internet connection and try again.',
+          name: 'NetworkError',
+          status: 0,
+        } as AuthError,
+      }
+    }
   }
 
   const value = {
