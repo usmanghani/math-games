@@ -136,6 +136,7 @@ export type Database = {
         Row: {
           best_score: number | null
           best_streak: number | null
+          coins_earned: number | null
           completed_at: string | null
           created_at: string | null
           id: number
@@ -152,6 +153,7 @@ export type Database = {
         Insert: {
           best_score?: number | null
           best_streak?: number | null
+          coins_earned?: number | null
           completed_at?: string | null
           created_at?: string | null
           id?: number
@@ -168,6 +170,7 @@ export type Database = {
         Update: {
           best_score?: number | null
           best_streak?: number | null
+          coins_earned?: number | null
           completed_at?: string | null
           created_at?: string | null
           id?: number
