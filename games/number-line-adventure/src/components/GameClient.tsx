@@ -48,7 +48,7 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
   // Save progress when session completes
   useEffect(() => {
     if (sessionComplete && !progressSaved) {
-      completeLevel(levelNumber, correctCount, bestStreak)
+      completeLevel(levelNumber, correctCount, bestStreak, correctCount)
       setProgressSaved(true)
     }
   }, [sessionComplete, progressSaved, completeLevel, levelNumber, correctCount, bestStreak])
