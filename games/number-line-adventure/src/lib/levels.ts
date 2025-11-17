@@ -25,8 +25,8 @@ function rowToLevelConfig(row: LevelDefinitionRow): LevelConfig {
   return {
     levelNumber: row.level_number,
     delta: row.delta,
-    minRange: row.min_range,
-    maxRange: row.max_range,
+    minRange: row.min_range ?? 0,
+    maxRange: row.max_range ?? 20,
     operations: row.operations as Operation[],
     requiredAccuracy: Number(row.required_accuracy),
   }

@@ -97,7 +97,18 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
     resetForNextProblem()
   }
 
+  // Find the next locked level to show in the progress message
+  const findNextLockedLevel = () => {
+    for (let i = levelNumber + 1; i <= 10; i++) {
+      if (!isLevelUnlocked(i)) {
+        return i
+      }
+    }
+    return levelNumber + 1 // Default to immediate next if all are unlocked
+  }
+
   const nextLevelNumber = levelNumber + 1
+  const nextLockedLevel = findNextLockedLevel()
   const isNextLevelUnlocked = isLevelUnlocked(nextLevelNumber)
   const hasNextLevel = levelNumber < 10
 
@@ -220,8 +231,8 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
               {correctCount >= 3 && hasNextLevel && (
                 <p className="success-message">
                   {isNextLevelUnlocked
-                    ? `Great job! Level ${nextLevelNumber} is now unlocked!`
-                    : `Keep practicing to unlock Level ${nextLevelNumber}!`}
+                    ? `Great job! Level ${nextLevelNumber} is ready to play!`
+                    : `Keep earning coins to unlock Level ${nextLockedLevel}!`}
                 </p>
               )}
               <div className="action-buttons">

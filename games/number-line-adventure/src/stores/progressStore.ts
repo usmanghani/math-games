@@ -28,8 +28,8 @@ interface ProgressState {
   setCurrentLevel: (level: number) => void
   loadProgress: (userId: string) => Promise<void>
   updateLevelProgress: (levelNumber: number, data: Partial<LevelProgress>) => Promise<void>
-  addCoins: (amount: number) => void
-  spendCoins: (amount: number) => boolean
+  addCoins: (amount: number) => Promise<void>
+  spendCoins: (amount: number) => Promise<boolean>
   unlockLevel: (levelNumber: number) => Promise<boolean>
   completeLevel: (levelNumber: number, score: number, streak: number, correctAnswers: number) => Promise<void>
   resetProgress: () => void
@@ -98,6 +98,7 @@ export const useProgressStore = create<ProgressState>()(
         try {
           set({ loading: true, error: null })
 
+          // Load user progress
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data, error } = await (supabase as any)
             .from('user_progress')
@@ -108,6 +109,25 @@ export const useProgressStore = create<ProgressState>()(
             console.error('Error loading progress:', error)
             set({ error: 'Failed to load progress', loading: false })
             return
+          }
+
+          // Load coin balance from profiles
+          let coinBalance = 0
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: profileData, error: profileError } = await (supabase as any)
+              .from('profiles')
+              .select('coins')
+              .eq('id', userId)
+              .single()
+
+            if (profileError) {
+              console.error('Error loading coin balance:', profileError)
+            } else if (profileData) {
+              coinBalance = profileData.coins || 0
+            }
+          } catch (err) {
+            console.error('Error fetching coin balance:', err)
           }
 
           // Check if userId still matches before updating state
@@ -145,6 +165,7 @@ export const useProgressStore = create<ProgressState>()(
 
           set({
             levels: levelsMap,
+            coins: coinBalance,
             loading: false,
             lastSyncedAt: new Date().toISOString(),
           })
@@ -198,18 +219,57 @@ export const useProgressStore = create<ProgressState>()(
       },
 
       // Add coins to player's balance
-      addCoins: (amount: number) => {
+      addCoins: async (amount: number) => {
         if (amount <= 0) return
         const currentCoins = get().coins
-        set({ coins: currentCoins + amount })
+        const newCoins = currentCoins + amount
+        set({ coins: newCoins })
+
+        // Sync to Supabase if user is authenticated
+        const { userId } = get()
+        if (userId && isSupabaseConfigured()) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { error } = await (supabase as any)
+              .from('profiles')
+              .update({ coins: newCoins })
+              .eq('id', userId)
+
+            if (error) {
+              console.error('Error syncing coins to Supabase:', error)
+            }
+          } catch (err) {
+            console.error('Error syncing coins:', err)
+          }
+        }
       },
 
       // Spend coins (returns true if successful, false if not enough coins)
-      spendCoins: (amount: number) => {
+      spendCoins: async (amount: number) => {
         const currentCoins = get().coins
         if (currentCoins < amount) return false
 
-        set({ coins: currentCoins - amount })
+        const newCoins = currentCoins - amount
+        set({ coins: newCoins })
+
+        // Sync to Supabase if user is authenticated
+        const { userId } = get()
+        if (userId && isSupabaseConfigured()) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { error } = await (supabase as any)
+              .from('profiles')
+              .update({ coins: newCoins })
+              .eq('id', userId)
+
+            if (error) {
+              console.error('Error syncing coins to Supabase:', error)
+            }
+          } catch (err) {
+            console.error('Error syncing coins:', err)
+          }
+        }
+
         return true
       },
 
@@ -236,7 +296,7 @@ export const useProgressStore = create<ProgressState>()(
         }
 
         // Spend coins and unlock
-        const spent = get().spendCoins(cost)
+        const spent = await get().spendCoins(cost)
         if (spent) {
           await get().updateLevelProgress(levelNumber, { isUnlocked: true })
           return true
