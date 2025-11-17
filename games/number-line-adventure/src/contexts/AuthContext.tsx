@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { useProgressStore } from '@/stores/progressStore'
 
 /**
  * Authentication context interface
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const isConfigured = isSupabaseConfigured()
+  const setUserId = useProgressStore((state) => state.setUserId)
 
   useEffect(() => {
     // Only attempt to get session if Supabase is configured
@@ -36,24 +38,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+    // Get initial session from storage (localStorage)
+    // This will restore the session if user was previously logged in
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error getting session:', error)
+        setLoading(false)
+        return
+      }
+
+      if (session) {
+        console.log('Session restored from storage:', session.user.email)
+        setSession(session)
+        setUser(session.user)
+      } else {
+        console.log('No existing session found')
+      }
       setLoading(false)
     })
 
-    // Listen for auth changes
+    // Listen for auth changes (sign in, sign out, token refresh)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email)
+
+      // Update state based on auth event
       setSession(session)
       setUser(session?.user ?? null)
-      setLoading(false)
+
+      // Ensure loading is false after any auth change
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        setLoading(false)
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [isConfigured])
+
+  // Sync user ID with progress store whenever user changes
+  // This ensures progress is loaded/saved for authenticated users
+  useEffect(() => {
+    if (user?.id) {
+      console.log('Syncing user ID with progress store:', user.id)
+      setUserId(user.id)
+    } else if (user === null) {
+      // User signed out, clear user ID from progress store
+      console.log('Clearing user ID from progress store')
+      setUserId(null)
+    }
+  }, [user, setUserId])
 
   /**
    * Sign up a new user
