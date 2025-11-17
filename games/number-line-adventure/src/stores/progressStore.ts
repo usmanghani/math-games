@@ -104,6 +104,16 @@ export const useProgressStore = create<ProgressState>()(
             return
           }
 
+          // Check if userId still matches before updating state
+          // This prevents race conditions when user logs out/in quickly
+          const currentUserId = get().userId
+          if (currentUserId !== userId) {
+            console.warn(
+              `Ignoring stale loadProgress response for userId ${userId}, current userId is ${currentUserId}`
+            )
+            return
+          }
+
           // Convert array to Map
           const levelsMap = new Map<number, LevelProgress>()
 
