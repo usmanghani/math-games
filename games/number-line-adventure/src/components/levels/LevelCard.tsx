@@ -34,11 +34,16 @@ export function LevelCard({ level }: LevelCardProps) {
     if (!canAfford || isUnlocking) return
 
     setIsUnlocking(true)
-    const success = await unlockLevel(levelNumber)
-    if (!success) {
+    try {
+      const success = await unlockLevel(levelNumber)
+      if (!success) {
+        setIsUnlocking(false)
+      }
+      // If successful, the component will re-render with isUnlocked=true
+    } catch (error) {
+      console.error(`Failed to unlock level ${levelNumber}:`, error)
       setIsUnlocking(false)
     }
-    // If successful, the component will re-render with isUnlocked=true
   }
 
   // Locked card - show unlock button

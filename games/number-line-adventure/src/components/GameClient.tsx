@@ -40,7 +40,6 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
   const [showResult, setShowResult] = useState(false)
   const [roundIndex, setRoundIndex] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
-  const [coinsEarned, setCoinsEarned] = useState(0)
   const [streak, setStreak] = useState(0)
   const [bestStreak, setBestStreak] = useState(0)
   const [history, setHistory] = useState<boolean[]>([])
@@ -68,7 +67,6 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
     setHistory((prev) => [...prev, wasCorrect])
     if (wasCorrect) {
       setCorrectCount((prev) => prev + 1)
-      setCoinsEarned((prev) => prev + 1) // 1 coin per correct answer
       setStreak((prev) => {
         const next = prev + 1
         setBestStreak((best) => Math.max(best, next))
@@ -88,7 +86,6 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
   const restartSession = () => {
     setRoundIndex(0)
     setCorrectCount(0)
-    setCoinsEarned(0)
     setStreak(0)
     setBestStreak(0)
     setHistory([])
@@ -163,7 +160,7 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
           <div className="flex-1">
             <p className="eyebrow">Level {levelNumber} {levelConfig.delta > 2 ? `- Hopping by ${levelConfig.delta}` : ''}</p>
           </div>
-          <CoinDisplay className="!m-0" />
+          <CoinDisplay />
         </div>
         <h1>Number Line Adventure</h1>
         <p className="subtitle">
@@ -222,10 +219,10 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
                 You solved {correctCount} of {TOTAL_ROUNDS} challenges. Your longest streak was {bestStreak}{' '}
                 correct hop{bestStreak === 1 ? '' : 's'}.
               </p>
-              {coinsEarned > 0 && (
+              {correctCount > 0 && (
                 <p className="success-message flex items-center justify-center gap-2">
                   <span className="text-2xl">🪙</span>
-                  <span>You earned {coinsEarned} coin{coinsEarned === 1 ? '' : 's'}!</span>
+                  <span>You earned {correctCount} coin{correctCount === 1 ? '' : 's'}!</span>
                 </p>
               )}
               {correctCount >= 3 && hasNextLevel && (
