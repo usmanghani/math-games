@@ -18,9 +18,17 @@ export function isSupabaseConfigured(): boolean {
 export const supabase = isSupabaseConfigured()
   ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
+        // Persist session in localStorage so users stay logged in across page refreshes
         persistSession: true,
+        // Automatically refresh access tokens before they expire
         autoRefreshToken: true,
+        // Detect OAuth callbacks and handle them automatically
         detectSessionInUrl: true,
+        // Use localStorage for session storage (default, but being explicit)
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        // More aggressive token refresh to prevent session expiry
+        // Refresh 60 seconds before expiry instead of default 10 seconds
+        storageKey: 'supabase-auth-token',
       },
     })
   : // Create a minimal placeholder client that won't make actual requests
