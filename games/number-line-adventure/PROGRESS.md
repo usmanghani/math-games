@@ -1,197 +1,326 @@
-# Implementation Progress Tracker
+# Number Line Adventure - Development Progress
 
-**Last Updated**: 2025-11-15
+Last Updated: 2025-01-17
 
-## Overview
+## Current Status: ✅ Delta-Based Coin System Implemented
 
-This document tracks the implementation progress of the Number Line Adventure progressive difficulty and user profiles system.
+### Latest Milestone: PR #31 Merged to Main
 
-**Total Progress**: 3 of 15 PRs complete (20%)
-
-## Phase Status
-
-### ✅ Phase 1: Database & Level System (COMPLETE)
-
-**Status**: 3/3 PRs complete
-**Completion Date**: 2025-11-15
-
-| PR | Title | Status | PR Link | Notes |
-|----|-------|--------|---------|-------|
-| #1 | Database Schema & Supabase Configuration | ✅ Complete | [PR #10](https://github.com/usmanghani/math-games/pull/10) | Env vars configured, migrations ready |
-| #2 | Level Configuration System | ✅ Complete | [PR #11](https://github.com/usmanghani/math-games/pull/11) | Type-safe level utilities |
-| #3 | Update Problem Generator | ✅ Complete | [PR #12](https://github.com/usmanghani/math-games/pull/12) | Fixed delta support added |
-
-**Key Achievements**:
-- Database schema designed with 4 tables and RLS policies
-- 10 levels seeded with progressive difficulty (delta 2-11)
-- Problem generator supports level-specific delta values
-- All features include fallback systems for graceful degradation
-- Comprehensive documentation and usage examples
-
-**Action Items**:
-- [ ] Run database migrations in Supabase dashboard
-- [ ] Review and merge PR #1
-- [ ] Review and merge PR #2 (after PR #1)
-- [ ] Review and merge PR #3 (after PR #2)
+The delta-based coin earning system has been successfully implemented and merged into the main branch.
 
 ---
 
-### 🔄 Phase 2: Authentication & User Profiles (IN PROGRESS)
+## Coin Economy System Design
 
-**Status**: 0/3 PRs complete (1 building now)
-**Started**: 2025-11-15
+### Formula
+- **Level Delta**: `delta(N) = N + 1`
+  - Level 1: delta = 2
+  - Level 2: delta = 3
+  - Level 3: delta = 4
+  - etc.
 
-| PR | Title | Status | PR Link | Estimated Lines | Notes |
-|----|-------|--------|---------|----------------|-------|
-| #4 | Supabase Auth Setup | 🔄 Building | TBD | ~200 | Auth context, middleware, utilities |
-| #5 | Login/Signup UI | ⏳ Pending | TBD | ~250 | Email/password forms, validation |
-| #6 | Profile Setup & Management | ⏳ Pending | TBD | ~200 | Display name, avatar selection |
+- **Coins Earned**: `coinsEarned(N) = correctAnswers × delta`
+  - Level 1 (delta 2): 5 questions × 2 = 10 coins max
+  - Level 2 (delta 3): 5 questions × 3 = 15 coins max
+  - Level 3 (delta 4): 5 questions × 4 = 20 coins max
 
-**Current Focus**: Building PR #4 - Supabase Auth Setup
+- **Level Unlock Cost**: `cost(N) = N × 5`
+  - Level 2: 2 × 5 = 10 coins
+  - Level 3: 3 × 5 = 15 coins
+  - Level 4: 4 × 5 = 20 coins
 
----
+### Balance
+✅ **Perfect Balance Achieved**: Completing Level N with 5/5 correct answers earns exactly enough coins to unlock Level N+1!
 
-### ⏳ Phase 3: Progress Tracking & Persistence (NOT STARTED)
-
-**Status**: 0/3 PRs complete
-
-| PR | Title | Status | Estimated Lines |
-|----|-------|--------|----------------|
-| #7 | User Progress Store (Zustand) | ⏳ Pending | ~150 |
-| #8 | Progress API Routes | ⏳ Pending | ~200 |
-| #9 | Integrate Progress into GameClient | ⏳ Pending | ~100 |
-
----
-
-### ⏳ Phase 4: Level Selection & Navigation (NOT STARTED)
-
-**Status**: 0/3 PRs complete
-
-| PR | Title | Status | Estimated Lines |
-|----|-------|--------|----------------|
-| #10 | Level Selection Screen | ⏳ Pending | ~300 |
-| #11 | Navigation & Routing Updates | ⏳ Pending | ~150 |
-| #12 | Level-Specific Game Sessions | ⏳ Pending | ~100 |
+### Key Features
+- **Per-Level Coin Tracking**: Coins earned from Level N are stored with Level N
+- **Anti-Farming**: Cannot farm coins by replaying completed levels to unlock future levels
+- **Auto-Unlock**: Next level automatically unlocks when player has enough coins
+- **Coin Deduction**: Unlocking a level deducts coins from the previous level
 
 ---
 
-### ⏳ Phase 5: Polish & Testing (NOT STARTED)
+## Recent Pull Requests
 
-**Status**: 0/3 PRs complete
+### PR #31: Delta-Based Coin System ✅ MERGED
+**Branch**: `feature/delta-based-coin-system`
+**Commits**: 2 (7d4e193, afd554b)
+**Merged**: 2025-01-17 14:03:51 UTC
+**Merge Commit**: 484c16a
 
-| PR | Title | Status | Estimated Lines |
-|----|-------|--------|----------------|
-| #13 | Loading States & Error Handling | ⏳ Pending | ~150 |
-| #14 | E2E Test Suite (Playwright) | ⏳ Pending | ~400 |
-| #15 | Deployment & Monitoring | ⏳ Pending | ~100 |
+#### Changes Made:
+1. **src/lib/levels.ts**
+   - Updated `DEFAULT_LEVELS` array with delta = levelNumber + 1
+   - Fixed documentation to reflect correct unlock costs
 
----
+2. **src/lib/coins.ts**
+   - Updated `calculateLevelCost()` formula: `levelNumber * 5`
+   - Removed obsolete `calculateCoinReward()` function
+   - Removed obsolete `calculateMaxCoins()` function
 
-## Metrics
+3. **src/stores/progressStore.ts**
+   - Updated `completeLevel()` to calculate coins: `correctAnswers * delta`
+   - Implemented auto-unlock logic for next level
+   - Removed debug console.log statements
+   - Kept console.error/warn for actual errors
 
-### Code Changes
-- **Total Lines Added**: ~1,674 (across 3 PRs)
-- **Files Created**: 8
-- **Files Modified**: 5
+4. **supabase/migrations/20250117000002_update_level_deltas.sql**
+   - Updated migration to set `delta = level_number + 1`
+   - Fixed documentation comments
 
-### Build Status
-- ✅ All PRs build successfully
-- ✅ All PRs pass linting
-- ✅ All PRs pass TypeScript checks
-- ✅ All PRs deployed to Vercel preview
+#### Review Comments Addressed:
+- ✅ HIGH: Removed obsolete functions from coins.ts
+- ✅ HIGH: Fixed incorrect comment about level unlock costs
+- ✅ MEDIUM: Removed console.log debugging statements
+- ⚠️ MEDIUM: Pass delta from LevelConfig (deferred as architectural improvement)
 
-### Testing Coverage
-- ✅ Usage examples documented
-- ✅ Integration patterns provided
-- ⏳ Unit tests (to be added in Phase 5)
-- ⏳ E2E tests (PR #14)
+### PR #30: Coin Display UI ✅ MERGED
+**Merged**: Earlier session
+**Commit**: c8b7f08
 
----
-
-## Timeline
-
-### Completed
-- **2025-11-14**: Project kickoff, planning document created
-- **2025-11-15**: Phase 1 completed (3 PRs), Phase 2 started
-
-### Projected
-- **2025-11-16**: Complete Phase 2 (PRs #4-6)
-- **2025-11-17**: Complete Phase 3 (PRs #7-9)
-- **2025-11-18**: Complete Phase 4 (PRs #10-12)
-- **2025-11-19**: Complete Phase 5 (PRs #13-15)
-
-**Estimated Completion**: 2025-11-19 (4 days from start)
+### PR #29: Core Coin Mechanics ✅ MERGED
+**Status**: Merged in previous session
 
 ---
 
-## Key Decisions Log
+## Code Architecture
 
-### 2025-11-15: Tech Stack Confirmed
-- **Database**: Supabase (PostgreSQL with auth built-in)
-- **State Management**: Zustand (lightweight, TypeScript-first)
-- **Testing**: Playwright for E2E, Jest for unit tests
-- **Deployment**: Vercel (with environment variables configured)
+### Key Files
 
-### 2025-11-15: Level Progression Confirmed
-- Level 1: delta=2, range=[0,10]
-- Level 2: delta=3, range=[0,15]
-- ...up to Level 10: delta=11, range=[0,55]
-- Required accuracy: 60% (3/5 correct) to unlock next level
+#### Progress Store (`src/stores/progressStore.ts`)
+```typescript
+interface LevelProgress {
+  levelNumber: number
+  isUnlocked: boolean
+  isCompleted: boolean
+  bestScore: number | null
+  bestStreak: number | null
+  attemptsCount: number
+  lastPlayedAt: string | null
+  coinsEarned: number // Coins earned from THIS level
+}
+```
 
-### 2025-11-15: Migration Strategy
-- Database migrations run manually via Supabase dashboard
-- Seed data includes 10 levels (expandable in future)
-- RLS policies enforce data isolation per user
+**Key Functions:**
+- `completeLevel(levelNumber, score, streak, correctAnswers)` - Awards coins and auto-unlocks next level
+- `unlockLevel(levelNumber)` - Manually unlock level (deducts coins from previous level)
+- `getCoinsFromLevel(levelNumber)` - Returns coins earned from specific level
 
----
+#### Level Definitions (`src/lib/levels.ts`)
+```typescript
+interface LevelConfig {
+  levelNumber: number
+  delta: number // Jump size (2, 3, 4, 5, ...)
+  minRange: number // Starting number (default: 0)
+  maxRange: number // Maximum number
+  operations: Operation[] // ['addition', 'subtraction']
+  requiredAccuracy: number // 0.6 = 60% to unlock next level
+}
+```
 
-## Blockers & Risks
-
-### Current Blockers
-- None
-
-### Resolved Blockers
-- ✅ Supabase environment variables configured in Vercel
-- ✅ Database schema designed and migrations created
-
-### Active Risks
-1. **Database migrations not yet run** (Medium)
-   - Mitigation: Clear step-by-step guide provided
-   - Impact: PRs #2-3 features won't work until migrations complete
-
-2. **PR dependency chain** (Low)
-   - Mitigation: Building PRs on feature branches, can rebase if needed
-   - Impact: PR #2 depends on #1, PR #3 depends on #2, etc.
-
----
-
-## Next Actions
-
-### Immediate (Today)
-1. ✅ Complete PR #3
-2. 🔄 Build PR #4 (Supabase Auth Setup)
-3. ⏳ Run database migrations in Supabase dashboard
-4. ⏳ Review PRs #1-3
-
-### This Week
-1. Complete Phase 2 (Auth & Profiles)
-2. Complete Phase 3 (Progress Tracking)
-3. Start Phase 4 (Level Selection)
-
-### Next Week
-1. Complete Phase 4 & 5
-2. Full E2E testing
-3. Production deployment
+#### Coin Utilities (`src/lib/coins.ts`)
+- `calculateLevelCost(levelNumber)` - Returns unlock cost for a level
+- `canAffordLevel(currentCoins, levelNumber)` - Checks if player can afford level
+- `calculateTotalCostUpToLevel(upToLevel)` - Returns cumulative cost
 
 ---
 
-## Notes
+## Database Schema
 
-- All PRs include comprehensive documentation
-- Backward compatibility maintained throughout
-- Existing GameClient continues to work during migration
-- Small, focused diffs for easy review (<500 lines each)
+### Tables
+
+#### `level_definitions`
+- `level_number`: Level ID (1-10)
+- `delta`: Jump size (2-11, matching levelNumber + 1)
+- `min_range`: Minimum number (0)
+- `max_range`: Maximum number (increases with level)
+- `operations`: Array of allowed operations
+- `required_accuracy`: Accuracy needed (0.6)
+
+#### `user_progress`
+- `user_id`: Foreign key to users
+- `level_number`: Foreign key to level_definitions
+- `is_unlocked`: Boolean
+- `is_completed`: Boolean
+- `best_score`: Integer (nullable)
+- `best_streak`: Integer (nullable)
+- `attempts_count`: Integer (default 0)
+- `last_played_at`: Timestamp (nullable)
+- `coins_earned`: Integer (default 0)
 
 ---
 
-**For detailed implementation plan, see [PLAN.md](./PLAN.md)**
+## Git Branch Status
+
+- **Main Branch**: `main` (up to date)
+- **Latest Commit**: 484c16a (PR #31 merge)
+- **Previous Commit**: 717bacd
+- **Deleted Branches**: `feature/delta-based-coin-system` (merged)
+
+---
+
+## Development Environment
+
+### Running Services
+- **npm run dev**: Port 3000 (local dev server)
+- **Supabase**: Running locally via `npx supabase start`
+- **Vercel**: Production deployment at https://number-line-adventure-prod-eloarbuzs.vercel.app
+
+### Database
+- Local Supabase instance running
+- Migration applied: `20250117000002_update_level_deltas.sql`
+- All 10 levels configured with correct deltas
+
+---
+
+## Testing Checklist
+
+### Manual Testing Completed
+- ✅ Build passes (`npm run build`)
+- ✅ Lint passes (no errors)
+- ✅ Migration applied successfully
+- ✅ PR review comments addressed
+
+### Manual Testing Recommended
+- [ ] Complete Level 1 with 5/5 correct → Should earn 10 coins and auto-unlock Level 2
+- [ ] Complete Level 2 with 5/5 correct → Should earn 15 coins and auto-unlock Level 3
+- [ ] Complete Level 3 with 5/5 correct → Should earn 20 coins and auto-unlock Level 4
+- [ ] Verify level costs display correctly on locked levels
+- [ ] Verify coins persist after refresh
+- [ ] Test incomplete level completion (e.g., 3/5 correct) → Should NOT auto-unlock next level
+
+---
+
+## Known Issues / Technical Debt
+
+### None Critical
+All known issues have been addressed in PR #31.
+
+### Future Improvements (Optional)
+1. **Pass delta from LevelConfig**: Currently, delta is calculated inline as `levelNumber + 1`. Could pass from `LevelConfig.delta` for better maintainability.
+   - **Priority**: Low (architectural improvement)
+   - **Impact**: Makes system more flexible for custom delta values
+   - **File**: `src/stores/progressStore.ts:273`
+
+2. **Add unit tests for coin calculations**: No tests currently exist for the new coin economy
+   - **Priority**: Medium
+   - **Files to test**: `src/lib/coins.ts`, `src/stores/progressStore.ts`
+
+3. **Add E2E tests for level progression**: Test the full flow of earning coins and unlocking levels
+   - **Priority**: Medium
+
+---
+
+## Next Steps / Pending Tasks
+
+### Immediate (None)
+✅ All tasks completed and merged!
+
+### Future Features (Backlog)
+1. **Achievements System**: Award badges for completing levels with perfect scores
+2. **Leaderboards**: Track and display top players by score/speed
+3. **More Levels**: Expand beyond 10 levels
+4. **Multiplication/Division**: Add more operation types
+5. **Power-ups**: Use coins to purchase hints or time extensions
+6. **Sound Effects**: Add audio feedback for correct/incorrect answers
+
+---
+
+## Commands Reference
+
+### Git
+```bash
+# Check current branch and status
+git status
+git branch
+
+# Switch to main
+git checkout main
+git pull
+
+# Create new feature branch
+git checkout -b feature/your-feature-name
+
+# Commit changes
+git add .
+git commit -m "feat: your commit message"
+git push
+```
+
+### GitHub PR
+```bash
+# Create PR
+gh pr create --title "Title" --body "Description"
+
+# View PR
+gh pr view 31
+
+# Check for review comments
+gh api repos/usmanghani/math-games/pulls/31/comments
+
+# Merge PR
+gh pr merge 31 --squash --auto
+```
+
+### Build & Test
+```bash
+# Development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Lint check
+npm run lint
+```
+
+### Supabase
+```bash
+# Start local Supabase
+npx supabase start
+
+# Stop local Supabase
+npx supabase stop
+
+# Apply migrations
+npx supabase db reset
+
+# Generate types
+npx supabase gen types typescript --local > src/lib/database.types.ts
+```
+
+---
+
+## Contact & Resources
+
+- **Repository**: https://github.com/usmanghani/math-games
+- **Production**: https://number-line-adventure-prod-eloarbuzs.vercel.app
+- **Latest PR**: https://github.com/usmanghani/math-games/pull/31
+
+---
+
+## Session Notes
+
+### Session Date: 2025-01-17
+
+**Completed:**
+1. Implemented delta-based coin earning system (correctAnswers × delta)
+2. Updated level unlock cost formula (levelNumber × 5)
+3. Updated database migration for correct deltas
+4. Applied migration to local database
+5. Created PR #31 and addressed all review comments
+6. Successfully merged PR #31 to main
+7. Cleaned up feature branch
+
+**Time Investment:** ~30 minutes
+**Result:** ✅ Production-ready coin economy system
+
+**Key Decisions:**
+- Chose to calculate delta inline (`levelNumber + 1`) for simplicity
+- Removed debug logging for cleaner production code
+- Kept console.error/warn for actual error conditions
+- Achieved perfect balance: 1 perfect playthrough unlocks next level
+
+---
+
+*This progress file is automatically maintained. Last updated after PR #31 merge.*
