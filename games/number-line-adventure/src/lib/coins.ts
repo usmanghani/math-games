@@ -24,27 +24,6 @@ export function calculateLevelCost(levelNumber: number): number {
   return levelNumber * 5
 }
 
-/**
- * Calculate coins earned for a correct answer
- * Base reward: 1 coin per correct answer
- *
- * @param isCorrect Whether the answer was correct
- * @returns Number of coins to award
- */
-export function calculateCoinReward(isCorrect: boolean): number {
-  return isCorrect ? 1 : 0
-}
-
-/**
- * Calculate total coins available if all levels completed perfectly
- * Assumes 5 questions per level with 1 coin per correct answer
- *
- * @param totalLevels Total number of levels
- * @returns Maximum coins achievable
- */
-export function calculateMaxCoins(totalLevels: number): number {
-  return totalLevels * 5 // 5 questions per level, 1 coin each
-}
 
 /**
  * Check if player has enough coins to unlock a level

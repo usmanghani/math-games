@@ -166,7 +166,7 @@ export function getPreviousLevel(currentLevel: number): number | null {
 /**
  * Default level configurations (fallback when database is unavailable)
  * Delta = levelNumber + 1 (Level 1 = delta 2, Level 2 = delta 3, etc.)
- * This means Level N earns (N+1) * 5 coins, and Level N+1 costs N * 5 coins to unlock
+ * This means Level N earns (N+1) * 5 coins, and Level N+1 costs (N+1) * 5 coins to unlock
  * Matches the seed data in migrations/20250114000002_seed_levels.sql
  */
 export const DEFAULT_LEVELS: LevelConfig[] = [

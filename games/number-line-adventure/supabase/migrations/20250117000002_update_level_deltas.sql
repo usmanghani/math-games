@@ -1,6 +1,6 @@
 -- Update level deltas to match level_number + 1
 -- Level 1 should have delta=2, Level 2 should have delta=3, etc.
--- This ensures Level N earns (N+1)*5 coins, and Level N+1 costs N*5 coins
+-- This ensures Level N earns (N+1)*5 coins, and Level N+1 costs (N+1)*5 coins
 
 UPDATE level_definitions
 SET delta = level_number + 1
