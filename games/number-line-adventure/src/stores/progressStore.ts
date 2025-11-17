@@ -207,16 +207,18 @@ export const useProgressStore = create<ProgressState>()(
 
       // Unlock a level (requires coins from previous level, returns true if successful)
       unlockLevel: async (levelNumber: number): Promise<boolean> => {
+        console.log(`[Unlock] Attempting to unlock Level ${levelNumber}...`)
         const { levels } = get()
         const levelData = levels.get(levelNumber)
 
         // Check if level exists and isn't already unlocked
         if (!levelData) {
-          console.error(`Level ${levelNumber} not found`)
+          console.error(`[Unlock] ❌ Level ${levelNumber} not found`)
           return false
         }
 
         if (levelData.isUnlocked) {
+          console.log(`[Unlock] Level ${levelNumber} already unlocked`)
           return true // Already unlocked
         }
 
@@ -231,9 +233,11 @@ export const useProgressStore = create<ProgressState>()(
 
         // Check if player has enough coins from previous level
         const cost = calculateLevelCost(levelNumber)
+        console.log(`[Unlock] Level ${previousLevelNumber} has ${coinsFromPreviousLevel} coins. Level ${levelNumber} costs ${cost} coins.`)
+
         if (coinsFromPreviousLevel < cost) {
           console.warn(
-            `Not enough coins to unlock level ${levelNumber}. Need ${cost}, have ${coinsFromPreviousLevel} from level ${previousLevelNumber}`
+            `[Unlock] ❌ Not enough coins to unlock level ${levelNumber}. Need ${cost}, have ${coinsFromPreviousLevel} from level ${previousLevelNumber}`
           )
           return false
         }
@@ -241,16 +245,18 @@ export const useProgressStore = create<ProgressState>()(
         // Deduct coins from previous level and unlock current level
         const previousLevelData = levels.get(previousLevelNumber)
         if (!previousLevelData) {
-          console.error(`Previous level ${previousLevelNumber} not found`)
+          console.error(`[Unlock] ❌ Previous level ${previousLevelNumber} not found`)
           return false
         }
 
+        console.log(`[Unlock] Deducting ${cost} coins from Level ${previousLevelNumber} (${coinsFromPreviousLevel} -> ${coinsFromPreviousLevel - cost})`)
         // Update previous level to deduct coins
         await get().updateLevelProgress(previousLevelNumber, {
           coinsEarned: previousLevelData.coinsEarned - cost,
         })
 
         // Unlock the current level
+        console.log(`[Unlock] ✅ Unlocking Level ${levelNumber}!`)
         await get().updateLevelProgress(levelNumber, { isUnlocked: true })
         return true
       },
@@ -291,11 +297,18 @@ export const useProgressStore = create<ProgressState>()(
 
         if (nextLevelData && !nextLevelData.isUnlocked) {
           const cost = calculateLevelCost(nextLevelNumber)
+          console.log(`[Auto-unlock] Level ${levelNumber} completed with ${totalCoinsForLevel} coins. Checking if Level ${nextLevelNumber} (cost: ${cost}) can be unlocked...`)
+
           // Check if this level has enough coins to unlock the next level
           if (totalCoinsForLevel >= cost) {
+            console.log(`[Auto-unlock] ✅ Unlocking Level ${nextLevelNumber}!`)
             // Automatically unlock the next level and deduct coins
             await get().unlockLevel(nextLevelNumber)
+          } else {
+            console.log(`[Auto-unlock] ❌ Not enough coins. Need ${cost - totalCoinsForLevel} more.`)
           }
+        } else if (nextLevelData?.isUnlocked) {
+          console.log(`[Auto-unlock] Level ${nextLevelNumber} already unlocked.`)
         }
       },
 
