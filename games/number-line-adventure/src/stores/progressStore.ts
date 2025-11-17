@@ -285,8 +285,18 @@ export const useProgressStore = create<ProgressState>()(
 
         await get().updateLevelProgress(levelNumber, updates)
 
-        // Note: Level unlocking now requires manual unlock with coins
-        // Players must explicitly spend coins from the previous level to unlock next level
+        // Auto-unlock next level if player has enough coins
+        const nextLevelNumber = levelNumber + 1
+        const nextLevelData = levels.get(nextLevelNumber)
+
+        if (nextLevelData && !nextLevelData.isUnlocked) {
+          const cost = calculateLevelCost(nextLevelNumber)
+          // Check if this level has enough coins to unlock the next level
+          if (totalCoinsForLevel >= cost) {
+            // Automatically unlock the next level and deduct coins
+            await get().unlockLevel(nextLevelNumber)
+          }
+        }
       },
 
       // Reset all progress (for testing or user request)
