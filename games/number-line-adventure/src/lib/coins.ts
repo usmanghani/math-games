@@ -2,15 +2,16 @@
 
 /**
  * Calculate the coin cost to unlock a specific level
- * Formula: 5 coins per level (flat rate)
+ * Formula: levelNumber * 5 coins
  * Level 1 is free (0 coins)
- * Level 2: 5 coins
- * Level 3: 5 coins
- * Level 4: 5 coins
+ * Level 2: 2 * 5 = 10 coins (earned from Level 1 with delta=2)
+ * Level 3: 3 * 5 = 15 coins (earned from Level 2 with delta=3)
+ * Level 4: 4 * 5 = 20 coins (earned from Level 3 with delta=4)
  * etc.
  *
- * This means completing a level once with all correct answers
- * (5 coins earned) is enough to unlock the next level.
+ * Since Level N has delta=(N+1), it earns (N+1)*5 coins.
+ * Level N+1 costs (N+1)*5 coins to unlock.
+ * This means completing Level N once perfectly unlocks Level N+1!
  *
  * @param levelNumber The level number (1-based)
  * @returns The number of coins required to unlock this level
@@ -19,8 +20,8 @@ export function calculateLevelCost(levelNumber: number): number {
   // Level 1 is always free
   if (levelNumber <= 1) return 0
 
-  // Formula: Flat 5 coins per level
-  return 5
+  // Formula: levelNumber * 5
+  return levelNumber * 5
 }
 
 /**

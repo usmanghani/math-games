@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { calculateLevelCost, calculateCoinReward } from '@/lib/coins'
+import { calculateLevelCost } from '@/lib/coins'
 
 export interface LevelProgress {
   levelNumber: number
@@ -268,9 +268,14 @@ export const useProgressStore = create<ProgressState>()(
 
         if (!levelData) return
 
-        // Award coins for correct answers (1 coin per correct answer)
-        const newCoinsEarned = correctAnswers * calculateCoinReward(true)
+        // Award coins based on delta (Level N has delta=N+1)
+        // Each correct answer earns delta coins (e.g., Level 1 with delta=2 earns 2 coins per correct answer)
+        const delta = levelNumber + 1
+        const newCoinsEarned = correctAnswers * delta
         const totalCoinsForLevel = levelData.coinsEarned + newCoinsEarned
+
+        console.log(`[Complete] Level ${levelNumber} (delta=${delta}): ${correctAnswers} correct × ${delta} = ${newCoinsEarned} coins earned`)
+
 
         const updates: Partial<LevelProgress> = {
           isCompleted: true,
