@@ -5,10 +5,10 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import GameClient from '@/components/GameClient'
 import { getLevelConfigWithFallback, type LevelConfig } from '@/lib/levels'
-import { useRequireAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
 
 function GamePageContent() {
-  const { user, loading: authLoading } = useRequireAuth()
+  const { user, loading: authLoading } = useAuth()
   const searchParams = useSearchParams()
   const [levelConfig, setLevelConfig] = useState<LevelConfig | null>(null)
   const [loading, setLoading] = useState(true)
@@ -54,11 +54,6 @@ function GamePageContent() {
     )
   }
 
-  // useRequireAuth guarantees user is not null after loading
-  if (!user) {
-    return null
-  }
-
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-100 to-purple-100 p-4">
@@ -85,7 +80,33 @@ function GamePageContent() {
     )
   }
 
-  return <GameClient levelNumber={levelNumber} levelConfig={levelConfig} />
+  return (
+    <div>
+      {/* Show sign-in banner if not authenticated */}
+      {!user && (
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 text-center">
+          <p className="text-sm">
+            Playing as guest. Progress is saved locally only.{' '}
+            <Link
+              href="/auth?mode=signup"
+              className="underline font-semibold hover:text-blue-100"
+            >
+              Sign up
+            </Link>{' '}
+            or{' '}
+            <Link
+              href="/auth?mode=login"
+              className="underline font-semibold hover:text-blue-100"
+            >
+              sign in
+            </Link>{' '}
+            to save your progress to the cloud!
+          </p>
+        </div>
+      )}
+      <GameClient levelNumber={levelNumber} levelConfig={levelConfig} />
+    </div>
+  )
 }
 
 export default function GamePage() {

@@ -2,42 +2,29 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Middleware to protect routes that require authentication
+ * Middleware for the Number Line Adventure app
  *
- * Protected routes:
- * - /profile
- * - /levels
- * - /game (future)
+ * Note: Authentication is now optional. Users can play without signing in,
+ * but progress will only be saved locally. Signing in enables cloud sync.
  *
- * Public routes:
- * - /
- * - /auth/*
+ * Only /profile requires authentication (redirects to auth page).
+ * /game and /levels are now accessible to everyone.
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Define protected routes
-  const protectedRoutes = ['/profile', '/levels', '/game']
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
+  // Only protect the profile page
+  if (pathname.startsWith('/profile')) {
+    const sessionCookie = request.cookies.get('sb-access-token')
 
-  // If not a protected route, allow access
-  if (!isProtectedRoute) {
-    return NextResponse.next()
+    if (!sessionCookie) {
+      const authUrl = new URL('/auth', request.url)
+      authUrl.searchParams.set('redirectTo', pathname)
+      return NextResponse.redirect(authUrl)
+    }
   }
 
-  // Check for authentication cookie/session
-  // Note: In a full implementation, you would verify the session with Supabase
-  // For now, we'll do basic cookie check
-  const sessionCookie = request.cookies.get('sb-access-token')
-
-  // If no session and trying to access protected route, redirect to auth
-  if (!sessionCookie && isProtectedRoute) {
-    const authUrl = new URL('/auth', request.url)
-    authUrl.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(authUrl)
-  }
-
-  // Allow access
+  // Allow access to all other routes
   return NextResponse.next()
 }
 

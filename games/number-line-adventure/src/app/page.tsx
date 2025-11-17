@@ -50,18 +50,31 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
                 Get Started
               </h2>
-              <p className="text-gray-600 text-center mb-6">
-                Sign in to track your progress and unlock new levels!
-              </p>
+              <Link
+                href="/levels"
+                className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-xl py-4 px-6 rounded-lg transition-all text-center"
+              >
+                Play Now →
+              </Link>
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">
+                    Or sign in to save progress
+                  </span>
+                </div>
+              </div>
               <Link
                 href="/auth?mode=signup"
-                className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-xl py-4 px-6 rounded-lg transition-all text-center"
+                className="block w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition-colors text-center"
               >
                 Sign Up
               </Link>
               <Link
                 href="/auth?mode=login"
-                className="block w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition-colors text-center"
+                className="block w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors text-center"
               >
                 Log In
               </Link>

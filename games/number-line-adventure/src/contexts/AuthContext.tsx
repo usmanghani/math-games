@@ -132,20 +132,15 @@ export function useAuth() {
 }
 
 /**
- * Hook to require authentication
- * Throws an error if user is not authenticated
- * Useful for protected pages
+ * Hook that was previously used to require authentication
+ * Now just returns auth state without throwing errors
+ * Kept for backward compatibility with existing code
+ *
+ * Note: Authentication is now optional in this app
  */
 export function useRequireAuth() {
   const { user, loading, isConfigured } = useAuth()
 
-  if (!isConfigured) {
-    throw new Error('Authentication is not configured. Please set up Supabase.')
-  }
-
-  if (!loading && !user) {
-    throw new Error('Authentication required. Please sign in.')
-  }
-
-  return { user, loading }
+  // No longer throws errors - auth is optional
+  return { user, loading, isConfigured }
 }

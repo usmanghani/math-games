@@ -2,11 +2,11 @@
 
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { useRequireAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { LevelGrid } from '@/components/levels/LevelGrid'
 
 function LevelsPageContent() {
-  const { user, loading } = useRequireAuth()
+  const { user, loading } = useAuth()
 
   if (loading) {
     return (
@@ -16,13 +16,30 @@ function LevelsPageContent() {
     )
   }
 
-  // useRequireAuth guarantees user is not null after loading
-  if (!user) {
-    return null
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-purple-100 p-4">
+      {/* Show sign-in banner if not authenticated */}
+      {!user && (
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 text-center">
+          <p className="text-sm">
+            Playing as guest. Progress is saved locally only.{' '}
+            <Link
+              href="/auth?mode=signup"
+              className="underline font-semibold hover:text-blue-100"
+            >
+              Sign up
+            </Link>{' '}
+            or{' '}
+            <Link
+              href="/auth?mode=login"
+              className="underline font-semibold hover:text-blue-100"
+            >
+              sign in
+            </Link>{' '}
+            to save your progress to the cloud!
+          </p>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto pt-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -45,12 +62,21 @@ function LevelsPageContent() {
           >
             ← Back to Home
           </Link>
-          <Link
-            href="/profile"
-            className="text-blue-600 hover:text-blue-700 font-medium"
-          >
-            My Profile →
-          </Link>
+          {user ? (
+            <Link
+              href="/profile"
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              My Profile →
+            </Link>
+          ) : (
+            <Link
+              href="/auth"
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Sign In to Save Progress →
+            </Link>
+          )}
         </div>
       </div>
     </div>
