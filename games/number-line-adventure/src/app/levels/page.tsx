@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { LevelGrid } from '@/components/levels/LevelGrid'
+import CoinDisplay from '@/components/CoinDisplay'
 
 function LevelsPageContent() {
   const { user, loading } = useAuth()
@@ -46,9 +47,12 @@ function LevelsPageContent() {
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
             Select a Level
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-4">
             Complete levels to unlock new challenges
           </p>
+          <div className="flex justify-center">
+            <CoinDisplay />
+          </div>
         </div>
 
         {/* Level Grid */}

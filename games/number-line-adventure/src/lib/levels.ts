@@ -25,8 +25,8 @@ function rowToLevelConfig(row: LevelDefinitionRow): LevelConfig {
   return {
     levelNumber: row.level_number,
     delta: row.delta,
-    minRange: row.min_range,
-    maxRange: row.max_range,
+    minRange: row.min_range ?? 0,
+    maxRange: row.max_range ?? 20,
     operations: row.operations as Operation[],
     requiredAccuracy: Number(row.required_accuracy),
   }
@@ -165,19 +165,20 @@ export function getPreviousLevel(currentLevel: number): number | null {
 
 /**
  * Default level configurations (fallback when database is unavailable)
+ * Level number matches delta (Level 1 = delta 1, Level 2 = delta 2, etc.)
  * Matches the seed data in migrations/20250114000002_seed_levels.sql
  */
 export const DEFAULT_LEVELS: LevelConfig[] = [
-  { levelNumber: 1, delta: 2, minRange: 0, maxRange: 10, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
-  { levelNumber: 2, delta: 3, minRange: 0, maxRange: 15, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
-  { levelNumber: 3, delta: 4, minRange: 0, maxRange: 20, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
-  { levelNumber: 4, delta: 5, minRange: 0, maxRange: 25, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
-  { levelNumber: 5, delta: 6, minRange: 0, maxRange: 30, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
-  { levelNumber: 6, delta: 7, minRange: 0, maxRange: 35, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
-  { levelNumber: 7, delta: 8, minRange: 0, maxRange: 40, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
-  { levelNumber: 8, delta: 9, minRange: 0, maxRange: 45, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
-  { levelNumber: 9, delta: 10, minRange: 0, maxRange: 50, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
-  { levelNumber: 10, delta: 11, minRange: 0, maxRange: 55, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
+  { levelNumber: 1, delta: 1, minRange: 0, maxRange: 10, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
+  { levelNumber: 2, delta: 2, minRange: 0, maxRange: 15, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
+  { levelNumber: 3, delta: 3, minRange: 0, maxRange: 20, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
+  { levelNumber: 4, delta: 4, minRange: 0, maxRange: 25, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
+  { levelNumber: 5, delta: 5, minRange: 0, maxRange: 30, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
+  { levelNumber: 6, delta: 6, minRange: 0, maxRange: 35, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
+  { levelNumber: 7, delta: 7, minRange: 0, maxRange: 40, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
+  { levelNumber: 8, delta: 8, minRange: 0, maxRange: 45, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
+  { levelNumber: 9, delta: 9, minRange: 0, maxRange: 50, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
+  { levelNumber: 10, delta: 10, minRange: 0, maxRange: 55, operations: ['addition', 'subtraction'], requiredAccuracy: 0.6 },
 ]
 
 /**

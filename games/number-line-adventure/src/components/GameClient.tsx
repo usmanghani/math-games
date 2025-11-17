@@ -7,6 +7,7 @@ import NumberLine from './NumberLine'
 import { NumberLineProblem, generateProblemFromLevel } from '../lib/problem'
 import { LevelConfig } from '../lib/levels'
 import { useProgress } from '@/hooks/useProgress'
+import CoinDisplay from './CoinDisplay'
 import './GameClient.css'
 
 const TOTAL_ROUNDS = 5
@@ -93,7 +94,18 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
     resetForNextProblem()
   }
 
+  // Find the next locked level to show in the progress message
+  const findNextLockedLevel = () => {
+    for (let i = levelNumber + 1; i <= 10; i++) {
+      if (!isLevelUnlocked(i)) {
+        return i
+      }
+    }
+    return levelNumber + 1 // Default to immediate next if all are unlocked
+  }
+
   const nextLevelNumber = levelNumber + 1
+  const nextLockedLevel = findNextLockedLevel()
   const isNextLevelUnlocked = isLevelUnlocked(nextLevelNumber)
   const hasNextLevel = levelNumber < 10
 
@@ -144,7 +156,12 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
   return (
     <div className="app-shell">
       <header className="app-header">
-        <p className="eyebrow">Level {levelNumber} {levelConfig.delta > 2 ? `- Hopping by ${levelConfig.delta}` : ''}</p>
+        <div className="flex justify-between items-start mb-2">
+          <div className="flex-1">
+            <p className="eyebrow">Level {levelNumber} {levelConfig.delta > 2 ? `- Hopping by ${levelConfig.delta}` : ''}</p>
+          </div>
+          <CoinDisplay />
+        </div>
         <h1>Number Line Adventure</h1>
         <p className="subtitle">
           Strengthen gentle addition and subtraction by tracing our bunny&apos;s hops on a colorful number line.
@@ -202,11 +219,17 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
                 You solved {correctCount} of {TOTAL_ROUNDS} challenges. Your longest streak was {bestStreak}{' '}
                 correct hop{bestStreak === 1 ? '' : 's'}.
               </p>
+              {correctCount > 0 && (
+                <p className="success-message flex items-center justify-center gap-2">
+                  <span className="text-2xl">🪙</span>
+                  <span>You earned {correctCount} coin{correctCount === 1 ? '' : 's'}!</span>
+                </p>
+              )}
               {correctCount >= 3 && hasNextLevel && (
                 <p className="success-message">
                   {isNextLevelUnlocked
-                    ? `Great job! Level ${nextLevelNumber} is now unlocked!`
-                    : `Keep practicing to unlock Level ${nextLevelNumber}!`}
+                    ? `Great job! Level ${nextLevelNumber} is ready to play!`
+                    : `Keep earning coins to unlock Level ${nextLockedLevel}!`}
                 </p>
               )}
               <div className="action-buttons">
