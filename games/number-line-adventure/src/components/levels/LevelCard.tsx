@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { LevelProgress } from '@/stores/progressStore'
+import { LevelProgress, useProgressStore } from '@/stores/progressStore'
+import { calculateLevelCost, canAffordLevel } from '@/lib/coins'
+import { useState } from 'react'
 
 interface LevelCardProps {
   level: LevelProgress
@@ -16,15 +18,56 @@ export function LevelCard({ level }: LevelCardProps) {
     bestStreak,
   } = level
 
-  // Locked card - not clickable
+  const coins = useProgressStore((state) => state.coins)
+  const unlockLevel = useProgressStore((state) => state.unlockLevel)
+  const [isUnlocking, setIsUnlocking] = useState(false)
+
+  const cost = calculateLevelCost(levelNumber)
+  const canAfford = canAffordLevel(coins, levelNumber)
+
+  // Handler for unlock button
+  const handleUnlock = async () => {
+    if (!canAfford || isUnlocking) return
+
+    setIsUnlocking(true)
+    const success = await unlockLevel(levelNumber)
+    if (!success) {
+      setIsUnlocking(false)
+    }
+    // If successful, the component will re-render with isUnlocked=true
+  }
+
+  // Locked card - show unlock button
   if (!isUnlocked) {
     return (
-      <div className="aspect-square bg-gray-100 rounded-xl p-4 flex flex-col items-center justify-center border-2 border-gray-200 cursor-not-allowed opacity-60">
+      <div className="aspect-square bg-gray-100 rounded-xl p-4 flex flex-col items-center justify-center border-2 border-gray-200 relative">
         <div className="text-4xl mb-2">🔒</div>
         <div className="text-xl font-bold text-gray-500">
           Level {levelNumber}
         </div>
-        <div className="text-xs text-gray-400 mt-1">Locked</div>
+
+        {/* Cost Display */}
+        <div className="mt-2 flex items-center gap-1 text-sm">
+          <span className="text-base">🪙</span>
+          <span className={canAfford ? 'text-green-600 font-semibold' : 'text-gray-500'}>
+            {cost}
+          </span>
+        </div>
+
+        {/* Unlock Button */}
+        {canAfford ? (
+          <button
+            onClick={handleUnlock}
+            disabled={isUnlocking}
+            className="mt-3 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-green-700 active:scale-95 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isUnlocking ? 'Unlocking...' : 'Unlock'}
+          </button>
+        ) : (
+          <div className="mt-3 text-xs text-gray-400 text-center">
+            Need {cost - coins} more coins
+          </div>
+        )}
       </div>
     )
   }
