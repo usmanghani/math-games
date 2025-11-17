@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { calculateLevelCost, calculateCoinReward, canAffordLevel } from '@/lib/coins'
 
 export interface LevelProgress {
   levelNumber: number
@@ -17,6 +18,7 @@ interface ProgressState {
   userId: string | null
   levels: Map<number, LevelProgress>
   currentLevel: number
+  coins: number // Total coins earned
   loading: boolean
   error: string | null
   lastSyncedAt: string | null
@@ -26,8 +28,10 @@ interface ProgressState {
   setCurrentLevel: (level: number) => void
   loadProgress: (userId: string) => Promise<void>
   updateLevelProgress: (levelNumber: number, data: Partial<LevelProgress>) => Promise<void>
-  unlockLevel: (levelNumber: number) => Promise<void>
-  completeLevel: (levelNumber: number, score: number, streak: number) => Promise<void>
+  addCoins: (amount: number) => void
+  spendCoins: (amount: number) => boolean
+  unlockLevel: (levelNumber: number) => Promise<boolean>
+  completeLevel: (levelNumber: number, score: number, streak: number, correctAnswers: number) => Promise<void>
   resetProgress: () => void
   syncWithServer: () => Promise<void>
 }
@@ -56,6 +60,7 @@ export const useProgressStore = create<ProgressState>()(
       userId: null,
       levels: initialLevels(),
       currentLevel: 1,
+      coins: 0,
       loading: false,
       error: null,
       lastSyncedAt: null,
@@ -70,6 +75,7 @@ export const useProgressStore = create<ProgressState>()(
           set({
             levels: initialLevels(),
             currentLevel: 1,
+            coins: 0,
             loading: false,
             lastSyncedAt: null,
           })
@@ -191,13 +197,56 @@ export const useProgressStore = create<ProgressState>()(
         }
       },
 
-      // Unlock a level
-      unlockLevel: async (levelNumber: number) => {
-        await get().updateLevelProgress(levelNumber, { isUnlocked: true })
+      // Add coins to player's balance
+      addCoins: (amount: number) => {
+        if (amount <= 0) return
+        const currentCoins = get().coins
+        set({ coins: currentCoins + amount })
+      },
+
+      // Spend coins (returns true if successful, false if not enough coins)
+      spendCoins: (amount: number) => {
+        const currentCoins = get().coins
+        if (currentCoins < amount) return false
+
+        set({ coins: currentCoins - amount })
+        return true
+      },
+
+      // Unlock a level (requires coins, returns true if successful)
+      unlockLevel: async (levelNumber: number): Promise<boolean> => {
+        const { levels } = get()
+        const levelData = levels.get(levelNumber)
+
+        // Check if level exists and isn't already unlocked
+        if (!levelData) {
+          console.error(`Level ${levelNumber} not found`)
+          return false
+        }
+
+        if (levelData.isUnlocked) {
+          return true // Already unlocked
+        }
+
+        // Check if player has enough coins
+        const cost = calculateLevelCost(levelNumber)
+        if (!canAffordLevel(get().coins, levelNumber)) {
+          console.warn(`Not enough coins to unlock level ${levelNumber}. Need ${cost}, have ${get().coins}`)
+          return false
+        }
+
+        // Spend coins and unlock
+        const spent = get().spendCoins(cost)
+        if (spent) {
+          await get().updateLevelProgress(levelNumber, { isUnlocked: true })
+          return true
+        }
+
+        return false
       },
 
       // Complete a level and update scores
-      completeLevel: async (levelNumber: number, score: number, streak: number) => {
+      completeLevel: async (levelNumber: number, score: number, streak: number, correctAnswers: number) => {
         const { levels } = get()
         const levelData = levels.get(levelNumber)
 
@@ -221,11 +270,12 @@ export const useProgressStore = create<ProgressState>()(
 
         await get().updateLevelProgress(levelNumber, updates)
 
-        // Check if should unlock next level (60% accuracy = 3/5 correct)
-        const accuracy = score / 5
-        if (accuracy >= 0.6 && levelNumber < 10) {
-          await get().unlockLevel(levelNumber + 1)
-        }
+        // Award coins for correct answers (1 coin per correct answer)
+        const coinsEarned = correctAnswers * calculateCoinReward(true)
+        get().addCoins(coinsEarned)
+
+        // Note: Level unlocking now requires manual unlock with coins
+        // Players must explicitly spend coins to unlock next level
       },
 
       // Reset all progress (for testing or user request)
@@ -233,6 +283,7 @@ export const useProgressStore = create<ProgressState>()(
         set({
           levels: initialLevels(),
           currentLevel: 1,
+          coins: 0,
           error: null,
           lastSyncedAt: null,
         })
@@ -252,6 +303,7 @@ export const useProgressStore = create<ProgressState>()(
         // Only persist these fields
         levels: Array.from(state.levels.entries()),
         currentLevel: state.currentLevel,
+        coins: state.coins,
         userId: state.userId,
       }),
       onRehydrateStorage: () => (state) => {
