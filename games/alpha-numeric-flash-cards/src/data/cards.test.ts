@@ -1,10 +1,10 @@
 import { cardsForMode, letterCards, numberCards } from "./cards";
 
 describe("cards data", () => {
-  it("includes 21 number cards (0 - 20)", () => {
-    expect(numberCards).toHaveLength(21);
+  it("includes 10 number cards (0 - 9)", () => {
+    expect(numberCards).toHaveLength(10);
     expect(numberCards[0].display).toBe("0");
-    expect(numberCards.at(-1)?.display).toBe("20");
+    expect(numberCards.at(-1)?.display).toBe("9");
   });
 
   it("includes 26 letter cards", () => {
