@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, Home, ArrowLeft, Star, Volume2, RefreshCw } from 'lucide-react';
+import { Mic, Home, ArrowLeft, Star, Volume2, RefreshCw, Settings } from 'lucide-react';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Simple confetti effect component using canvas
 const Confetti = () => {
@@ -84,34 +85,27 @@ const NUMBER_WORDS = {
 };
 
 export default function App() {
-  const [view, setView] = useState('home'); // home, game
+  const [view, setView] = useState('home'); // home, game, settings
   const [mode, setMode] = useState('numbers'); // numbers, alphabet, mixed
   const [currentCard, setCurrentCard] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [feedback, setFeedback] = useState(null); // 'correct', 'wrong', null
   const [score, setScore] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
-  
-  // Speech Recognition Setup
-  const recognitionRef = useRef(null);
+  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+  const [isProcessing, setIsProcessing] = useState(false);
 
+  // Audio Recording Setup
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const genAIRef = useRef(null);
+
+  // Initialize Gemini AI
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
-
-      recognitionRef.current.onstart = () => setIsListening(true);
-      recognitionRef.current.onend = () => setIsListening(false);
-      
-      recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.toLowerCase().trim();
-        handleAnswer(transcript);
-      };
+    if (apiKey) {
+      genAIRef.current = new GoogleGenerativeAI(apiKey);
     }
-  }, [currentCard]);
+  }, [apiKey]);
 
   const speak = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -142,16 +136,92 @@ export default function App() {
     generateCard(selectedMode);
   };
 
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-      alert("Speech recognition is not supported in this browser. Please try Chrome or Safari.");
+  const toggleListening = async () => {
+    if (!apiKey) {
+      alert("Please set your Gemini API key in settings first!");
+      setView('settings');
       return;
     }
 
     if (isListening) {
-      recognitionRef.current.stop();
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
     } else {
-      recognitionRef.current.start();
+      // Start recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunksRef.current.push(event.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          setIsListening(false);
+          setIsProcessing(true);
+
+          // Stop all tracks to release microphone
+          stream.getTracks().forEach(track => track.stop());
+
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          await processAudioWithGemini(audioBlob);
+        };
+
+        mediaRecorder.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        alert('Could not access microphone. Please grant permission.');
+      }
+    }
+  };
+
+  const processAudioWithGemini = async (audioBlob) => {
+    try {
+      if (!genAIRef.current) {
+        throw new Error('Gemini API not initialized');
+      }
+
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+
+      reader.onloadend = async () => {
+        try {
+          const base64Audio = reader.result.split(',')[1];
+
+          const model = genAIRef.current.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+
+          const result = await model.generateContent([
+            {
+              inlineData: {
+                mimeType: 'audio/webm',
+                data: base64Audio
+              }
+            },
+            'Listen to this audio and respond with ONLY the exact word, letter, or number that was spoken. Do not include any other text, explanation, or punctuation. Just the single word, letter, or number.'
+          ]);
+
+          const response = await result.response;
+          const transcript = response.text().toLowerCase().trim();
+
+          console.log('Gemini transcript:', transcript);
+          handleAnswer(transcript);
+        } catch (error) {
+          console.error('Error processing with Gemini:', error);
+          alert('Error processing audio. Please try again.');
+        } finally {
+          setIsProcessing(false);
+        }
+      };
+    } catch (error) {
+      console.error('Error in processAudioWithGemini:', error);
+      setIsProcessing(false);
+      alert('Error processing audio. Please try again.');
     }
   };
 
@@ -205,8 +275,68 @@ export default function App() {
   };
 
   // Render Methods
+  const renderSettings = () => (
+    <div className="flex flex-col items-center justify-center h-screen bg-slate-50 p-6">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold text-slate-700">Settings</h2>
+          <button
+            onClick={() => setView('home')}
+            className="p-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+          >
+            <ArrowLeft size={24} className="text-slate-600" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-600 mb-2">
+              Gemini API Key
+            </label>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => {
+                setApiKey(e.target.value);
+                localStorage.setItem('gemini_api_key', e.target.value);
+              }}
+              placeholder="Enter your Gemini API key"
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-blue-400 transition-colors"
+            />
+          </div>
+
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 space-y-2">
+            <p className="text-sm text-slate-700 font-semibold">How to get an API key:</p>
+            <ol className="text-sm text-slate-600 space-y-1 list-decimal list-inside">
+              <li>Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Google AI Studio</a></li>
+              <li>Click "Get API Key" or "Create API Key"</li>
+              <li>Copy and paste it here</li>
+            </ol>
+            <p className="text-xs text-slate-500 mt-2">
+              Your API key is stored locally in your browser and never sent anywhere except to Google's Gemini API.
+            </p>
+          </div>
+
+          {apiKey && (
+            <div className="flex items-center space-x-2 bg-green-50 border-2 border-green-200 rounded-2xl p-3">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm font-semibold text-green-700">API Key Set</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   const renderHome = () => (
-    <div className="flex flex-col items-center justify-center h-screen bg-blue-50 p-4 space-y-8">
+    <div className="flex flex-col items-center justify-center h-screen bg-blue-50 p-4 space-y-8 relative">
+      <button
+        onClick={() => setView('settings')}
+        className="absolute top-4 right-4 p-3 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow border-2 border-slate-200"
+      >
+        <Settings size={24} className="text-slate-600" />
+      </button>
+
       <h1 className="text-5xl font-black text-blue-600 tracking-tight text-center mb-4 drop-shadow-sm">
         Flash Cards!
       </h1>
@@ -243,9 +373,14 @@ export default function App() {
         </button>
       </div>
       
-      <p className="text-gray-400 text-sm mt-8 text-center px-8">
-        Works best on Safari (iOS) or Chrome. Enable microphone access when asked.
-      </p>
+      <div className="text-center space-y-2 mt-8">
+        <p className="text-gray-400 text-sm px-8">
+          Powered by Google Gemini AI for speech recognition
+        </p>
+        <p className="text-gray-400 text-xs px-8">
+          Enable microphone access when asked. Set your API key in settings.
+        </p>
+      </div>
     </div>
   );
 
@@ -317,16 +452,23 @@ export default function App() {
           <RefreshCw size={32} />
         </button>
 
-        <button 
+        <button
           onClick={toggleListening}
+          disabled={isProcessing}
           className={`
             p-8 rounded-full shadow-2xl border-b-8 active:border-b-0 active:translate-y-2 transition-all transform
-            ${isListening 
-              ? 'bg-red-500 border-red-700 text-white scale-110 animate-pulse' 
+            ${isProcessing
+              ? 'bg-yellow-500 border-yellow-700 text-white animate-pulse cursor-wait'
+              : isListening
+              ? 'bg-red-500 border-red-700 text-white scale-110 animate-pulse'
               : 'bg-blue-500 border-blue-700 text-white hover:bg-blue-600'}
           `}
         >
-          <Mic size={48} strokeWidth={2.5} />
+          {isProcessing ? (
+            <RefreshCw size={48} strokeWidth={2.5} className="animate-spin" />
+          ) : (
+            <Mic size={48} strokeWidth={2.5} />
+          )}
         </button>
         
         {/* Placeholder for alignment */}
@@ -337,7 +479,9 @@ export default function App() {
 
   return (
     <div className="font-sans touch-none select-none">
-      {view === 'home' ? renderHome() : renderGame()}
+      {view === 'home' && renderHome()}
+      {view === 'settings' && renderSettings()}
+      {view === 'game' && renderGame()}
     </div>
   );
 }
