@@ -69,18 +69,32 @@ const Confetti = () => {
   return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-50" />;
 };
 
+// Character sets for game modes
+const NUMBERS = '0123456789'.split('');
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
 // Number word mapping for speech recognition
 const NUMBER_WORDS = {
   '0': ['zero', 'oh'],
   '1': ['one', 'won'],
-  '2': ['two', 'to', 'too'],
+  '2': ['two'],
   '3': ['three', 'tree'],
-  '4': ['four', 'for'],
+  '4': ['four'],
   '5': ['five'],
   '6': ['six'],
   '7': ['seven'],
-  '8': ['eight', 'ate'],
+  '8': ['eight'],
   '9': ['nine']
+};
+
+// Phonetic fallbacks for letter recognition
+const PHONETIC_FALLBACKS = {
+  'a': ['hey', 'ay'],
+  'b': ['bee'],
+  'c': ['see', 'sea'],
+  'r': ['are'],
+  'u': ['you'],
+  'y': ['why']
 };
 
 export default function App() {
@@ -107,12 +121,12 @@ export default function App() {
   const generateCard = (selectedMode) => {
     let chars = [];
     if (selectedMode === 'numbers' || selectedMode === 'mixed') {
-      chars = [...chars, ...'0123456789'.split('')];
+      chars.push(...NUMBERS);
     }
     if (selectedMode === 'alphabet' || selectedMode === 'mixed') {
-      chars = [...chars, ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
+      chars.push(...ALPHABET);
     }
-    
+
     const randomChar = chars[Math.floor(Math.random() * chars.length)];
     setCurrentCard(randomChar);
     setFeedback(null);
@@ -202,26 +216,32 @@ export default function App() {
     let isCorrect = false;
     const target = currentCard.toLowerCase();
 
+    // Normalize the spoken text for better matching
+    const normalizedText = spokenText.toLowerCase().trim();
+
+    // Split text into words for word-boundary checking
+    const words = normalizedText.split(/\s+/);
+
     // Logic for checking answers
     if (target >= '0' && target <= '9') {
-      // Check digits
-      if (spokenText.includes(target)) isCorrect = true;
-      // Check number words
-      if (NUMBER_WORDS[target]?.some(word => spokenText.includes(word))) isCorrect = true;
-    } else {
-      // Alphabet
-      // Strict check for single letters to avoid "See" matching "C" erroneously in sentences, 
-      // but loose enough for "The letter A"
-      if (spokenText === target || spokenText.endsWith(` ${target}`) || spokenText === `${target}.`) {
+      // Check if any word is the digit itself
+      if (words.includes(target)) {
         isCorrect = true;
       }
-      // Phonetic fallbacks (common kid mispronunciations or mic errors)
-      if (target === 'a' && (spokenText.includes('hey') || spokenText.includes('ay'))) isCorrect = true;
-      if (target === 'b' && spokenText.includes('bee')) isCorrect = true;
-      if (target === 'c' && (spokenText.includes('see') || spokenText.includes('sea'))) isCorrect = true;
-      if (target === 'r' && spokenText.includes('are')) isCorrect = true;
-      if (target === 'u' && spokenText.includes('you')) isCorrect = true;
-      if (target === 'y' && spokenText.includes('why')) isCorrect = true;
+      // Check if any word matches number words (using word boundaries)
+      if (!isCorrect && NUMBER_WORDS[target]) {
+        isCorrect = NUMBER_WORDS[target].some(word => words.includes(word));
+      }
+    } else {
+      // Alphabet - check if the letter appears as a standalone word
+      if (words.includes(target) || normalizedText === target) {
+        isCorrect = true;
+      }
+
+      // Phonetic fallbacks using the data structure
+      if (!isCorrect && PHONETIC_FALLBACKS[target]) {
+        isCorrect = PHONETIC_FALLBACKS[target].some(word => words.includes(word));
+      }
     }
 
     if (isCorrect) {
