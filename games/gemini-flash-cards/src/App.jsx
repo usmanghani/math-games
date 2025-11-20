@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, Home, ArrowLeft, Star, Volume2, RefreshCw, Settings } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Mic, Home, ArrowLeft, Star, Volume2, RefreshCw } from 'lucide-react';
 
 // Simple confetti effect component using canvas
 const Confetti = () => {
@@ -85,27 +84,18 @@ const NUMBER_WORDS = {
 };
 
 export default function App() {
-  const [view, setView] = useState('home'); // home, game, settings
+  const [view, setView] = useState('home'); // home, game
   const [mode, setMode] = useState('numbers'); // numbers, alphabet, mixed
   const [currentCard, setCurrentCard] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [feedback, setFeedback] = useState(null); // 'correct', 'wrong', null
   const [score, setScore] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Audio Recording Setup
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
-  const genAIRef = useRef(null);
-
-  // Initialize Gemini AI
-  useEffect(() => {
-    if (apiKey) {
-      genAIRef.current = new GoogleGenerativeAI(apiKey);
-    }
-  }, [apiKey]);
 
   const speak = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -137,12 +127,6 @@ export default function App() {
   };
 
   const toggleListening = async () => {
-    if (!apiKey) {
-      alert("Please set your Gemini API key in settings first!");
-      setView('settings');
-      return;
-    }
-
     if (isListening) {
       // Stop recording
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
@@ -182,46 +166,35 @@ export default function App() {
 
   const processAudioWithGemini = async (audioBlob) => {
     try {
-      if (!genAIRef.current) {
-        throw new Error('Gemini API not initialized');
+      // Create FormData to send audio file
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'audio.webm');
+
+      // Call backend API endpoint
+      const apiUrl = import.meta.env.PROD
+        ? '/api/speech-to-text'  // Production (same domain)
+        : 'http://localhost:3001/api/speech-to-text';  // Local development
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to process audio');
       }
 
-      // Convert blob to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
+      const data = await response.json();
+      const transcript = data.transcript;
 
-      reader.onloadend = async () => {
-        try {
-          const base64Audio = reader.result.split(',')[1];
-
-          const model = genAIRef.current.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-
-          const result = await model.generateContent([
-            {
-              inlineData: {
-                mimeType: 'audio/webm',
-                data: base64Audio
-              }
-            },
-            'Listen to this audio and respond with ONLY the exact word, letter, or number that was spoken. Do not include any other text, explanation, or punctuation. Just the single word, letter, or number.'
-          ]);
-
-          const response = await result.response;
-          const transcript = response.text().toLowerCase().trim();
-
-          console.log('Gemini transcript:', transcript);
-          handleAnswer(transcript);
-        } catch (error) {
-          console.error('Error processing with Gemini:', error);
-          alert('Error processing audio. Please try again.');
-        } finally {
-          setIsProcessing(false);
-        }
-      };
+      console.log('Gemini transcript:', transcript);
+      handleAnswer(transcript);
     } catch (error) {
-      console.error('Error in processAudioWithGemini:', error);
-      setIsProcessing(false);
+      console.error('Error processing audio:', error);
       alert('Error processing audio. Please try again.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -275,68 +248,8 @@ export default function App() {
   };
 
   // Render Methods
-  const renderSettings = () => (
-    <div className="flex flex-col items-center justify-center h-screen bg-slate-50 p-6">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-slate-700">Settings</h2>
-          <button
-            onClick={() => setView('home')}
-            className="p-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
-          >
-            <ArrowLeft size={24} className="text-slate-600" />
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-2">
-              Gemini API Key
-            </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => {
-                setApiKey(e.target.value);
-                localStorage.setItem('gemini_api_key', e.target.value);
-              }}
-              placeholder="Enter your Gemini API key"
-              className="w-full px-4 py-3 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-blue-400 transition-colors"
-            />
-          </div>
-
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 space-y-2">
-            <p className="text-sm text-slate-700 font-semibold">How to get an API key:</p>
-            <ol className="text-sm text-slate-600 space-y-1 list-decimal list-inside">
-              <li>Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Google AI Studio</a></li>
-              <li>Click "Get API Key" or "Create API Key"</li>
-              <li>Copy and paste it here</li>
-            </ol>
-            <p className="text-xs text-slate-500 mt-2">
-              Your API key is stored locally in your browser and never sent anywhere except to Google's Gemini API.
-            </p>
-          </div>
-
-          {apiKey && (
-            <div className="flex items-center space-x-2 bg-green-50 border-2 border-green-200 rounded-2xl p-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm font-semibold text-green-700">API Key Set</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
   const renderHome = () => (
-    <div className="flex flex-col items-center justify-center h-screen bg-blue-50 p-4 space-y-8 relative">
-      <button
-        onClick={() => setView('settings')}
-        className="absolute top-4 right-4 p-3 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow border-2 border-slate-200"
-      >
-        <Settings size={24} className="text-slate-600" />
-      </button>
-
+    <div className="flex flex-col items-center justify-center h-screen bg-blue-50 p-4 space-y-8">
       <h1 className="text-5xl font-black text-blue-600 tracking-tight text-center mb-4 drop-shadow-sm">
         Flash Cards!
       </h1>
@@ -378,7 +291,7 @@ export default function App() {
           Powered by Google Gemini AI for speech recognition
         </p>
         <p className="text-gray-400 text-xs px-8">
-          Enable microphone access when asked. Set your API key in settings.
+          Enable microphone access when asked to start playing!
         </p>
       </div>
     </div>
@@ -479,9 +392,7 @@ export default function App() {
 
   return (
     <div className="font-sans touch-none select-none">
-      {view === 'home' && renderHome()}
-      {view === 'settings' && renderSettings()}
-      {view === 'game' && renderGame()}
+      {view === 'home' ? renderHome() : renderGame()}
     </div>
   );
 }
