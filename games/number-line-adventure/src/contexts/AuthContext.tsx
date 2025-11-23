@@ -104,9 +104,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      // Use environment-specific redirect for confirmation emails (falls back to current origin)
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')
+      const emailRedirectTo = `${siteUrl}/auth?mode=login`
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo,
+        },
       })
 
       return { error }
