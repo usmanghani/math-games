@@ -80,19 +80,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sync user ID with progress store whenever user changes
   // This ensures progress is loaded/saved for authenticated users
   useEffect(() => {
+    // Only sync when an authenticated user is present; avoid wiping guest/local progress
     if (user?.id) {
       if (process.env.NODE_ENV === 'development') {
         console.log('Syncing user ID with progress store:', user.id)
       }
       setUserId(user.id)
-    } else if (user === null) {
-      // User signed out, clear user ID from progress store
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Clearing user ID from progress store')
-      }
-      setUserId(null)
     }
-  }, [user, setUserId])
+  }, [user?.id, setUserId])
 
   /**
    * Sign up a new user
@@ -179,6 +174,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut()
 
+      // Clear user-bound state after sign-out to avoid mixing accounts
+      setUserId(null)
       return { error }
     } catch (err) {
       // Handle network errors gracefully
