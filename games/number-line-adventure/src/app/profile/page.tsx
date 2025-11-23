@@ -105,12 +105,12 @@ function ProfilePageContent() {
 
             {/* Statistics Overview */}
             <div className="mb-8">
-              <ProfileStats userId={user.id} />
+              <ProfileStats />
             </div>
 
             {/* Achievements */}
             <div className="mb-8">
-              <AchievementBadges userId={user.id} />
+              <AchievementBadges />
             </div>
 
             {/* Performance Chart */}
@@ -120,7 +120,7 @@ function ProfilePageContent() {
 
             {/* Level Progress Grid */}
             <div className="mb-8">
-              <LevelProgressGrid userId={user.id} />
+              <LevelProgressGrid />
             </div>
 
             {/* Game History */}
