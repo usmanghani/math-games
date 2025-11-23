@@ -38,6 +38,7 @@ interface ProgressState {
   completeLevel: (levelNumber: number, score: number, streak: number, correctAnswers: number) => Promise<void>
   resetProgress: () => void
   syncWithServer: () => Promise<void>
+  pushLocalProgressToServer: (userId: string) => Promise<void>
 }
 
 const calculateCoinsFromLevels = (levels: Map<number, LevelProgress>): number => {
@@ -93,6 +94,10 @@ export const useProgressStore = create<ProgressState>()(
       setUserId: async (userId: string | null) => {
         set({ userId, loading: true, error: null })
         if (userId) {
+          // If we have local progress, push it up before pulling from server
+          if (isSupabaseConfigured()) {
+            await get().pushLocalProgressToServer(userId)
+          }
           await get().loadProgress(userId)
         } else {
           // User logged out, reset to initial state
@@ -338,6 +343,29 @@ export const useProgressStore = create<ProgressState>()(
         const { userId } = get()
         if (userId) {
           await get().loadProgress(userId)
+        }
+      },
+
+      // Push local progress to Supabase (used when a user signs in with existing local data)
+      pushLocalProgressToServer: async (userId: string) => {
+        if (!isSupabaseConfigured()) return
+
+        const { levels } = get()
+        const rows = Array.from(levels.values())
+
+        try {
+          const payload = rows.map((level) => toUserProgressInsert(level, userId))
+          const { error } = await supabase
+            .from('user_progress')
+            .upsert(payload, { onConflict: 'user_id,level_number' })
+
+          if (error) {
+            console.error('Error pushing local progress:', error)
+          } else {
+            set({ lastSyncedAt: new Date().toISOString() })
+          }
+        } catch (err) {
+          console.error('Unexpected error pushing local progress:', err)
         }
       },
     }),
