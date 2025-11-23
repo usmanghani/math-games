@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { calculateLevelCost } from '@/lib/coins'
+import type { Database } from '@/lib/database.types'
+
+type TablesInsert<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
 
 export interface LevelProgress {
   levelNumber: number
@@ -33,6 +36,21 @@ interface ProgressState {
   completeLevel: (levelNumber: number, score: number, streak: number, correctAnswers: number) => Promise<void>
   resetProgress: () => void
   syncWithServer: () => Promise<void>
+}
+
+// Helper function to transform client-side LevelProgress to database payload
+function toUserProgressInsert(level: LevelProgress, userId: string): TablesInsert<'user_progress'> {
+  return {
+    user_id: userId,
+    level_number: level.levelNumber,
+    is_unlocked: level.isUnlocked,
+    is_completed: level.isCompleted,
+    best_score: level.bestScore,
+    best_streak: level.bestStreak,
+    total_attempts: level.attemptsCount,
+    last_played_at: level.lastPlayedAt,
+    coins_earned: level.coinsEarned,
+  }
 }
 
 const initialLevels = (): Map<number, LevelProgress> => {
@@ -172,22 +190,10 @@ export const useProgressStore = create<ProgressState>()(
         // Sync to server if user is authenticated
         if (userId && isSupabaseConfigured()) {
           try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { error } = await (supabase as any)
+            const payload = toUserProgressInsert(updatedLevel, userId)
+            const { error } = await supabase
               .from('user_progress')
-              .upsert({
-                user_id: userId,
-                level_number: levelNumber,
-                is_unlocked: updatedLevel.isUnlocked,
-                is_completed: updatedLevel.isCompleted,
-                best_score: updatedLevel.bestScore,
-                best_streak: updatedLevel.bestStreak,
-                total_attempts: updatedLevel.attemptsCount,
-                last_played_at: updatedLevel.lastPlayedAt,
-                coins_earned: updatedLevel.coinsEarned,
-              }, {
-                onConflict: 'user_id,level_number'
-              })
+              .upsert(payload, { onConflict: 'user_id,level_number' })
 
             if (error) {
               console.error('Error updating progress:', error)
