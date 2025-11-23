@@ -134,7 +134,12 @@ export const useProgressStore = create<ProgressState>()(
 
           if (error) {
             console.error('Error loading progress:', error)
-            set({ error: 'Failed to load progress', loading: false })
+            set((state) => ({
+              error: 'Failed to load progress',
+              loading: false,
+              // Keep local coins/levels so we don't silently wipe progress
+              coins: calculateCoinsFromLevels(state.levels),
+            }))
             return
           }
 
@@ -172,15 +177,21 @@ export const useProgressStore = create<ProgressState>()(
             })
           }
 
+          const coins = calculateCoinsFromLevels(levelsMap)
+
           set({
             levels: levelsMap,
-            coins: calculateCoinsFromLevels(levelsMap),
+            coins,
             loading: false,
             lastSyncedAt: new Date().toISOString(),
           })
         } catch (err) {
           console.error('Error loading progress:', err)
-          set({ error: 'An unexpected error occurred', loading: false })
+          set((state) => ({
+            error: 'An unexpected error occurred',
+            loading: false,
+            coins: calculateCoinsFromLevels(state.levels),
+          }))
         }
       },
 

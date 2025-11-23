@@ -1,82 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { Database } from '@/lib/database.types'
-
-type UserProgress = Database['public']['Tables']['user_progress']['Row']
+import { useProgress } from '@/hooks/useProgress'
 
 interface LevelProgressGridProps {
   userId: string
 }
 
 export function LevelProgressGrid({ userId }: LevelProgressGridProps) {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [levels, setLevels] = useState<UserProgress[]>([])
-
-  useEffect(() => {
-    loadLevels()
-  }, [userId])
-
-  const loadLevels = async () => {
-    if (!isSupabaseConfigured()) {
-      setError('Level progress requires Supabase configuration')
-      setLoading(false)
-      return
-    }
-
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', userId)
-        .order('level_number', { ascending: true })
-
-      if (fetchError) {
-        console.error('Error loading level progress:', fetchError)
-        setError('Failed to load level progress')
-        setLoading(false)
-        return
-      }
-
-      setLevels((data || []) as UserProgress[])
-    } catch (err) {
-      console.error('Error:', err)
-      setError('An unexpected error occurred')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center text-gray-600">
-          Loading level progress...
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-2xl shadow-xl p-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      </div>
-    )
-  }
+  const { levels } = useProgress()
 
   // Ensure we have all 10 levels (fill in missing ones)
-  const allLevels: (UserProgress | null)[] = Array.from(
-    { length: 10 },
-    (_, i) => {
-      const levelNum = i + 1
-      return levels.find((l) => l.level_number === levelNum) || null
-    }
-  )
+  const allLevels = Array.from({ length: 10 }, (_, i) => {
+    const levelNum = i + 1
+    return levels.find((l) => l.levelNumber === levelNum) || null
+  })
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">

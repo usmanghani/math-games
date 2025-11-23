@@ -1,10 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { Database } from '@/lib/database.types'
-
-type UserProgress = Database['public']['Tables']['user_progress']['Row']
+import { useMemo } from 'react'
+import { useProgress } from '@/hooks/useProgress'
 
 interface Badge {
   id: string
@@ -20,154 +17,90 @@ interface AchievementBadgesProps {
 }
 
 export function AchievementBadges({ userId }: AchievementBadgesProps) {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [badges, setBadges] = useState<Badge[]>([])
+  const { levels, coins } = useProgress()
 
-  useEffect(() => {
-    loadBadges()
-  }, [userId])
+  const badges = useMemo(() => {
+    const levelsCompleted = levels.filter((l) => l.isCompleted).length
+    const bestStreak = Math.max(0, ...levels.map((l) => l.bestStreak || 0))
+    const hasPerfectScore = levels.some((l) => l.bestScore === 5)
+    const totalAttempts = levels.reduce((sum, level) => sum + level.attemptsCount, 0)
+    const totalCorrect = levels.reduce((sum, level) => sum + (level.bestScore || 0), 0)
+    const accuracy =
+      totalAttempts > 0 ? Math.round((totalCorrect / (totalAttempts * 5)) * 100) : 0
 
-  const loadBadges = async () => {
-    if (!isSupabaseConfigured()) {
-      setError('Badges require Supabase configuration')
-      setLoading(false)
-      return
-    }
+    const achievementBadges: Badge[] = [
+      {
+        id: 'first_win',
+        name: 'First Win',
+        description: 'Complete your first level',
+        emoji: '🎯',
+        unlocked: levelsCompleted >= 1,
+        progress: levelsCompleted >= 1 ? undefined : '0/1 levels',
+      },
+      {
+        id: 'five_levels',
+        name: 'Level Master',
+        description: 'Complete 5 levels',
+        emoji: '⭐',
+        unlocked: levelsCompleted >= 5,
+        progress: levelsCompleted < 5 ? `${levelsCompleted}/5 levels` : undefined,
+      },
+      {
+        id: 'all_levels',
+        name: 'Champion',
+        description: 'Complete all 10 levels',
+        emoji: '👑',
+        unlocked: levelsCompleted >= 10,
+        progress: levelsCompleted < 10 ? `${levelsCompleted}/10 levels` : undefined,
+      },
+      {
+        id: 'perfect_score',
+        name: 'Perfect Score',
+        description: 'Get 5/5 on any level',
+        emoji: '💯',
+        unlocked: hasPerfectScore,
+      },
+      {
+        id: 'coin_collector',
+        name: 'Coin Collector',
+        description: 'Earn 100+ total coins',
+        emoji: '🪙',
+        unlocked: coins >= 100,
+        progress: coins < 100 ? `${coins}/100 coins` : undefined,
+      },
+      {
+        id: 'accuracy_master',
+        name: 'Accuracy Master',
+        description: 'Achieve 80%+ overall accuracy',
+        emoji: '🎓',
+        unlocked: accuracy >= 80 && totalAttempts > 0,
+        progress:
+          totalAttempts === 0
+            ? 'Play some games'
+            : accuracy < 80
+              ? `${accuracy}%/80%`
+              : undefined,
+      },
+      {
+        id: 'streak_king',
+        name: 'Streak King',
+        description: 'Achieve a streak of 10+',
+        emoji: '🔥',
+        unlocked: bestStreak >= 10,
+        progress: bestStreak < 10 ? `${bestStreak}/10 streak` : undefined,
+      },
+      {
+        id: 'dedicated',
+        name: 'Dedicated Player',
+        description: 'Complete 50+ total attempts',
+        emoji: '💪',
+        unlocked: totalAttempts >= 50,
+        progress: totalAttempts < 50 ? `${totalAttempts}/50 attempts` : undefined,
+      },
+    ]
 
-    try {
-      // Fetch user progress data
-      const { data, error: fetchError } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', userId)
-
-      if (fetchError) {
-        console.error('Error loading badges:', fetchError)
-        setError('Failed to load achievements')
-        setLoading(false)
-        return
-      }
-
-      const progressData = (data || []) as UserProgress[]
-
-      // Calculate achievement criteria
-      const levelsCompleted = progressData.filter((l) => l.is_completed).length
-      const totalCoins = progressData.reduce(
-        (sum, level) => sum + (level.coins_earned || 0),
-        0
-      )
-      const bestStreak = Math.max(
-        0,
-        ...progressData.map((l) => l.best_streak || 0)
-      )
-      const hasPerfectScore = progressData.some((l) => l.best_score === 5)
-      const totalAttempts = progressData.reduce(
-        (sum, level) => sum + (level.total_attempts || 0),
-        0
-      )
-      const totalCorrect = progressData.reduce(
-        (sum, level) => sum + (level.total_correct || 0),
-        0
-      )
-      const accuracy =
-        totalAttempts > 0
-          ? Math.round((totalCorrect / totalAttempts) * 100)
-          : 0
-
-      // Define badges
-      const achievementBadges: Badge[] = [
-        {
-          id: 'first_win',
-          name: 'First Win',
-          description: 'Complete your first level',
-          emoji: '🎯',
-          unlocked: levelsCompleted >= 1,
-          progress: levelsCompleted >= 1 ? undefined : '0/1 levels',
-        },
-        {
-          id: 'five_levels',
-          name: 'Level Master',
-          description: 'Complete 5 levels',
-          emoji: '⭐',
-          unlocked: levelsCompleted >= 5,
-          progress: levelsCompleted < 5 ? `${levelsCompleted}/5 levels` : undefined,
-        },
-        {
-          id: 'all_levels',
-          name: 'Champion',
-          description: 'Complete all 10 levels',
-          emoji: '👑',
-          unlocked: levelsCompleted >= 10,
-          progress: levelsCompleted < 10 ? `${levelsCompleted}/10 levels` : undefined,
-        },
-        {
-          id: 'perfect_score',
-          name: 'Perfect Score',
-          description: 'Get 5/5 on any level',
-          emoji: '💯',
-          unlocked: hasPerfectScore,
-        },
-        {
-          id: 'coin_collector',
-          name: 'Coin Collector',
-          description: 'Earn 100+ total coins',
-          emoji: '🪙',
-          unlocked: totalCoins >= 100,
-          progress: totalCoins < 100 ? `${totalCoins}/100 coins` : undefined,
-        },
-        {
-          id: 'accuracy_master',
-          name: 'Accuracy Master',
-          description: 'Achieve 80%+ overall accuracy',
-          emoji: '🎓',
-          unlocked: accuracy >= 80 && totalAttempts > 0,
-          progress: totalAttempts === 0 ? 'Play some games' : accuracy < 80 ? `${accuracy}%/80%` : undefined,
-        },
-        {
-          id: 'streak_king',
-          name: 'Streak King',
-          description: 'Achieve a streak of 10+',
-          emoji: '🔥',
-          unlocked: bestStreak >= 10,
-          progress: bestStreak < 10 ? `${bestStreak}/10 streak` : undefined,
-        },
-        {
-          id: 'dedicated',
-          name: 'Dedicated Player',
-          description: 'Complete 50+ total attempts',
-          emoji: '💪',
-          unlocked: totalAttempts >= 50,
-          progress: totalAttempts < 50 ? `${totalAttempts}/50 attempts` : undefined,
-        },
-      ]
-
-      setBadges(achievementBadges)
-    } catch (err) {
-      console.error('Error:', err)
-      setError('An unexpected error occurred')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center text-gray-600">Loading achievements...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-2xl shadow-xl p-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      </div>
-    )
-  }
+    return achievementBadges
+  }, [levels, coins])
 
   const unlockedCount = badges.filter((b) => b.unlocked).length
 

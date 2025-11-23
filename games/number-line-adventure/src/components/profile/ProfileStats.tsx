@@ -1,129 +1,51 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
-import { Database } from '@/lib/database.types'
+import { useMemo } from 'react'
 import CoinDisplay from '@/components/CoinDisplay'
-
-type UserProgress = Database['public']['Tables']['user_progress']['Row']
+import { useProgress } from '@/hooks/useProgress'
 
 interface ProfileStatsProps {
   userId: string
 }
 
 export function ProfileStats({ userId }: ProfileStatsProps) {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [stats, setStats] = useState({
-    totalCoins: 0,
-    levelsUnlocked: 0,
-    levelsCompleted: 0,
-    totalAttempts: 0,
-    totalCorrect: 0,
-    bestStreak: 0,
-    lastPlayedLevel: null as number | null,
-    lastPlayedAt: null as string | null,
-    lastCompletedLevel: null as number | null,
-  })
+  // We read from the local/global progress store so stats always render,
+  // even if Supabase is unavailable or updates are delayed.
+  const { levels, coins } = useProgress()
 
-  useEffect(() => {
-    const loadStats = async () => {
-      if (!isSupabaseConfigured()) {
-        setError('Stats require Supabase configuration')
-        setLoading(false)
-        return
-      }
+  const stats = useMemo(() => {
+    const levelsUnlocked = levels.filter((l) => l.isUnlocked).length
+    const levelsCompleted = levels.filter((l) => l.isCompleted).length
+    const totalAttempts = levels.reduce((sum, level) => sum + level.attemptsCount, 0)
+    const totalCorrect = levels.reduce((sum, level) => sum + (level.bestScore || 0), 0)
+    const bestStreak = Math.max(0, ...levels.map((l) => l.bestStreak || 0))
 
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('user_progress')
-          .select('*')
-          .eq('user_id', userId)
+    const mostRecentPlay = [...levels]
+      .filter((l) => l.lastPlayedAt)
+      .sort(
+        (a, b) =>
+          new Date(b.lastPlayedAt || 0).getTime() - new Date(a.lastPlayedAt || 0).getTime()
+      )[0]
 
-        if (fetchError) {
-          console.error('Error loading stats:', fetchError)
-          setError('Failed to load statistics')
-          setLoading(false)
-          return
-        }
+    const mostRecentCompletion = [...levels]
+      .filter((l) => l.isCompleted && l.lastPlayedAt)
+      .sort(
+        (a, b) =>
+          new Date(b.lastPlayedAt || 0).getTime() - new Date(a.lastPlayedAt || 0).getTime()
+      )[0]
 
-        const progressData = (data || []) as UserProgress[]
-
-        // Calculate stats
-        const totalCoins = progressData.reduce(
-          (sum, level) => sum + (level.coins_earned || 0),
-          0
-        )
-        const levelsUnlocked = progressData.filter((l) => l.is_unlocked).length
-        const levelsCompleted = progressData.filter((l) => l.is_completed).length
-        const totalAttempts = progressData.reduce(
-          (sum, level) => sum + (level.total_attempts || 0),
-          0
-        )
-        const totalCorrect = progressData.reduce(
-          (sum, level) => sum + (level.total_correct || 0),
-          0
-        )
-        const bestStreak = Math.max(
-          0,
-          ...progressData.map((l) => l.best_streak || 0)
-        )
-
-        // Find most recent played level
-        const levelsWithPlay = progressData.filter((l) => l.last_played_at)
-        const mostRecentPlay = [...levelsWithPlay].sort(
-          (a, b) =>
-            new Date(b.last_played_at!).getTime() -
-            new Date(a.last_played_at!).getTime()
-        )[0]
-
-        // Find most recent completed level
-        const levelsWithCompletion = progressData.filter((l) => l.completed_at)
-        const mostRecentCompletion = [...levelsWithCompletion].sort(
-          (a, b) =>
-            new Date(b.completed_at!).getTime() -
-            new Date(a.completed_at!).getTime()
-        )[0]
-
-        setStats({
-          totalCoins,
-          levelsUnlocked,
-          levelsCompleted,
-          totalAttempts,
-          totalCorrect,
-          bestStreak,
-          lastPlayedLevel: mostRecentPlay?.level_number || null,
-          lastPlayedAt: mostRecentPlay?.last_played_at || null,
-          lastCompletedLevel: mostRecentCompletion?.level_number || null,
-        })
-      } catch (err) {
-        console.error('Error:', err)
-        setError('An unexpected error occurred')
-      } finally {
-        setLoading(false)
-      }
+    return {
+      totalCoins: coins,
+      levelsUnlocked,
+      levelsCompleted,
+      totalAttempts,
+      totalCorrect,
+      bestStreak,
+      lastPlayedLevel: mostRecentPlay?.levelNumber || null,
+      lastPlayedAt: mostRecentPlay?.lastPlayedAt || null,
+      lastCompletedLevel: mostRecentCompletion?.levelNumber || null,
     }
-
-    loadStats()
-  }, [userId])
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center text-gray-600">Loading statistics...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-2xl shadow-xl p-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      </div>
-    )
-  }
+  }, [levels, coins])
 
   const accuracy =
     stats.totalAttempts > 0
