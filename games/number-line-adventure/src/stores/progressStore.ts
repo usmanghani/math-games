@@ -131,7 +131,7 @@ export const useProgressStore = create<ProgressState>()(
                 isCompleted: row.is_completed,
                 bestScore: row.best_score,
                 bestStreak: row.best_streak,
-                attemptsCount: row.attempts_count || 0,
+                attemptsCount: row.total_attempts || 0,
                 lastPlayedAt: row.last_played_at,
                 coinsEarned: row.coins_earned || 0,
               })
@@ -180,7 +180,7 @@ export const useProgressStore = create<ProgressState>()(
                 is_completed: updatedLevel.isCompleted,
                 best_score: updatedLevel.bestScore,
                 best_streak: updatedLevel.bestStreak,
-                attempts_count: updatedLevel.attemptsCount,
+                total_attempts: updatedLevel.attemptsCount,
                 last_played_at: updatedLevel.lastPlayedAt,
                 coins_earned: updatedLevel.coinsEarned,
               })
