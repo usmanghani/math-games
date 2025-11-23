@@ -12,7 +12,7 @@ interface Badge {
   progress?: string
 }
 
-export function AchievementBadges({ userId }: { userId: string }) {
+export function AchievementBadges() {
   const { levels, coins } = useProgress()
 
   const badges = useMemo(() => {

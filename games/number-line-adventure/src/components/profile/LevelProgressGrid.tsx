@@ -2,7 +2,7 @@
 
 import { useProgress } from '@/hooks/useProgress'
 
-export function LevelProgressGrid({ userId }: { userId: string }) {
+export function LevelProgressGrid() {
   const { levels } = useProgress()
 
   // Ensure we have all 10 levels (fill in missing ones)

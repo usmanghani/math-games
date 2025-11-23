@@ -34,10 +34,6 @@ export function PerformanceChart({ userId }: PerformanceChartProps) {
     }>
   >([])
 
-  useEffect(() => {
-    loadChartData()
-  }, [userId])
-
   const loadChartData = async () => {
     if (!isSupabaseConfigured()) {
       setError('Charts require Supabase configuration')
@@ -109,6 +105,10 @@ export function PerformanceChart({ userId }: PerformanceChartProps) {
       setLoading(false)
     }
   }
+  useEffect(() => {
+    loadChartData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   if (loading) {
     return (
