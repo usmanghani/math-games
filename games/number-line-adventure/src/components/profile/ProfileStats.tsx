@@ -4,11 +4,7 @@ import { useMemo } from 'react'
 import CoinDisplay from '@/components/CoinDisplay'
 import { useProgress } from '@/hooks/useProgress'
 
-interface ProfileStatsProps {
-  userId: string
-}
-
-export function ProfileStats({ userId }: ProfileStatsProps) {
+export function ProfileStats({ userId }: { userId: string }) {
   // We read from the local/global progress store so stats always render,
   // even if Supabase is unavailable or updates are delayed.
   const { levels, coins } = useProgress()

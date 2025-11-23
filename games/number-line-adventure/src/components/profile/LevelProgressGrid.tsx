@@ -2,11 +2,7 @@
 
 import { useProgress } from '@/hooks/useProgress'
 
-interface LevelProgressGridProps {
-  userId: string
-}
-
-export function LevelProgressGrid({ userId }: LevelProgressGridProps) {
+export function LevelProgressGrid({ userId }: { userId: string }) {
   const { levels } = useProgress()
 
   // Ensure we have all 10 levels (fill in missing ones)
