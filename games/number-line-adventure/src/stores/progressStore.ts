@@ -175,7 +175,9 @@ export const useProgressStore = create<ProgressState>()(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error } = await (supabase as any)
               .from('user_progress')
-              .update({
+              .upsert({
+                user_id: userId,
+                level_number: levelNumber,
                 is_unlocked: updatedLevel.isUnlocked,
                 is_completed: updatedLevel.isCompleted,
                 best_score: updatedLevel.bestScore,
@@ -183,9 +185,9 @@ export const useProgressStore = create<ProgressState>()(
                 total_attempts: updatedLevel.attemptsCount,
                 last_played_at: updatedLevel.lastPlayedAt,
                 coins_earned: updatedLevel.coinsEarned,
+              }, {
+                onConflict: 'user_id,level_number'
               })
-              .eq('user_id', userId)
-              .eq('level_number', levelNumber)
 
             if (error) {
               console.error('Error updating progress:', error)
