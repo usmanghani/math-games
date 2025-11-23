@@ -9,14 +9,14 @@ interface CoinDisplayProps {
 }
 
 export default function CoinDisplay({ className = '', levelNumber, label }: CoinDisplayProps) {
-  const getCoinsFromLevel = useProgressStore((state) => state.getCoinsFromLevel)
+  const totalCoins = useProgressStore((state) => state.coins)
   const levels = useProgressStore((state) => state.levels)
 
   // If levelNumber is provided, show coins from that level only
   // Otherwise, show total coins across all levels
   const coins = levelNumber !== undefined
-    ? getCoinsFromLevel(levelNumber)
-    : Array.from(levels.values()).reduce((sum, level) => sum + level.coinsEarned, 0)
+    ? levels.get(levelNumber)?.coinsEarned ?? 0
+    : totalCoins
 
   const ariaLabel = levelNumber !== undefined
     ? `Level ${levelNumber} has ${coins} coins`

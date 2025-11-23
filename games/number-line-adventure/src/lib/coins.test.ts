@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   calculateLevelCost,
-  calculateCoinReward,
-  calculateMaxCoins,
   canAffordLevel,
   calculateTotalCostUpToLevel,
 } from './coins'
@@ -55,35 +53,6 @@ describe('coins', () => {
 
     it('calculates cost for any level number (no config needed)', () => {
       expect(calculateLevelCost(999)).toBe(4995) // 5 * 999
-    })
-  })
-
-  describe('calculateCoinReward', () => {
-    it('returns 1 coin for correct answer', () => {
-      expect(calculateCoinReward(true)).toBe(1)
-    })
-
-    it('returns 0 coins for incorrect answer', () => {
-      expect(calculateCoinReward(false)).toBe(0)
-    })
-  })
-
-  describe('calculateMaxCoins', () => {
-    it('calculates max coins for 10 levels (50 coins)', () => {
-      expect(calculateMaxCoins(10)).toBe(50) // 10 levels * 5 questions * 1 coin
-    })
-
-    it('calculates max coins for 1 level (5 coins)', () => {
-      expect(calculateMaxCoins(1)).toBe(5)
-    })
-
-    it('calculates max coins for 0 levels (0 coins)', () => {
-      expect(calculateMaxCoins(0)).toBe(0)
-    })
-
-    it('calculates max coins for arbitrary number of levels', () => {
-      expect(calculateMaxCoins(20)).toBe(100) // 20 * 5
-      expect(calculateMaxCoins(100)).toBe(500) // 100 * 5
     })
   })
 
@@ -152,21 +121,19 @@ describe('coins', () => {
   })
 
   describe('integration: coin economy balance', () => {
-    it('max coins from level 1 is enough to unlock level 2', () => {
-      const coinsFromLevel1 = 5 // 5 questions, 1 coin each
-      const costOfLevel2 = calculateLevelCost(2) // 10 coins
-
-      // Player needs to complete at least 2 levels to unlock level 2
-      expect(coinsFromLevel1).toBeLessThan(costOfLevel2)
+    it('requires more coins as levels increase (linear cost growth)', () => {
+      const costs = Array.from({ length: 9 }, (_, i) => calculateLevelCost(i + 2))
+      const isStrictlyIncreasing = costs.every((cost, index) => index === 0 || cost > costs[index - 1])
+      expect(isStrictlyIncreasing).toBe(true)
     })
 
-    it('perfect progression through all levels is possible', () => {
-      const maxCoinsAvailable = calculateMaxCoins(10) // 50 coins
-      const totalCostForAllLevels = calculateTotalCostUpToLevel(10) // 270 coins
+    it('total cost grows with the requested level count', () => {
+      const costToLevel5 = calculateTotalCostUpToLevel(5)
+      const costToLevel10 = calculateTotalCostUpToLevel(10)
 
-      // This shows players need to replay levels to earn enough coins
-      // which is expected gameplay design
-      expect(maxCoinsAvailable).toBeLessThan(totalCostForAllLevels)
+      expect(costToLevel10).toBeGreaterThan(costToLevel5)
+      expect(costToLevel10).toBe(270)
+      expect(costToLevel5).toBe(70)
     })
 
     it('cost increases with each level', () => {

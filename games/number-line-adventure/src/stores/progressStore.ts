@@ -22,6 +22,7 @@ interface ProgressState {
   userId: string | null
   levels: Map<number, LevelProgress>
   currentLevel: number
+  coins: number
   loading: boolean
   error: string | null
   lastSyncedAt: string | null
@@ -31,11 +32,16 @@ interface ProgressState {
   setCurrentLevel: (level: number) => void
   loadProgress: (userId: string) => Promise<void>
   updateLevelProgress: (levelNumber: number, data: Partial<LevelProgress>) => Promise<void>
+  getTotalCoins: () => number
   getCoinsFromLevel: (levelNumber: number) => number
   unlockLevel: (levelNumber: number) => Promise<boolean>
   completeLevel: (levelNumber: number, score: number, streak: number, correctAnswers: number) => Promise<void>
   resetProgress: () => void
   syncWithServer: () => Promise<void>
+}
+
+const calculateCoinsFromLevels = (levels: Map<number, LevelProgress>): number => {
+  return Array.from(levels.values()).reduce((sum, level) => sum + (level.coinsEarned || 0), 0)
 }
 
 // Helper function to transform client-side LevelProgress to database payload
@@ -78,6 +84,7 @@ export const useProgressStore = create<ProgressState>()(
       userId: null,
       levels: initialLevels(),
       currentLevel: 1,
+      coins: 0,
       loading: false,
       error: null,
       lastSyncedAt: null,
@@ -92,6 +99,7 @@ export const useProgressStore = create<ProgressState>()(
           set({
             levels: initialLevels(),
             currentLevel: 1,
+            coins: 0,
             loading: false,
             lastSyncedAt: null,
           })
@@ -107,7 +115,10 @@ export const useProgressStore = create<ProgressState>()(
       loadProgress: async (userId: string) => {
         if (!isSupabaseConfigured()) {
           console.warn('Supabase not configured, using local state only')
-          set({ loading: false })
+          set((state) => ({
+            loading: false,
+            coins: calculateCoinsFromLevels(state.levels),
+          }))
           return
         }
 
@@ -163,6 +174,7 @@ export const useProgressStore = create<ProgressState>()(
 
           set({
             levels: levelsMap,
+            coins: calculateCoinsFromLevels(levelsMap),
             loading: false,
             lastSyncedAt: new Date().toISOString(),
           })
@@ -185,7 +197,10 @@ export const useProgressStore = create<ProgressState>()(
         const updatedLevel = { ...currentLevelData, ...data }
         const newLevels = new Map(levels)
         newLevels.set(levelNumber, updatedLevel)
-        set({ levels: newLevels })
+        set({
+          levels: newLevels,
+          coins: calculateCoinsFromLevels(newLevels),
+        })
 
         // Sync to server if user is authenticated
         if (userId && isSupabaseConfigured()) {
@@ -206,6 +221,9 @@ export const useProgressStore = create<ProgressState>()(
         }
       },
 
+      // Get total coins across all levels (global balance)
+      getTotalCoins: () => get().coins,
+
       // Get coins earned from a specific level
       getCoinsFromLevel: (levelNumber: number): number => {
         const { levels } = get()
@@ -213,9 +231,9 @@ export const useProgressStore = create<ProgressState>()(
         return levelData?.coinsEarned ?? 0
       },
 
-      // Unlock a level (requires coins from previous level, returns true if successful)
+      // Unlock a level using the global coin balance (returns true if successful)
       unlockLevel: async (levelNumber: number): Promise<boolean> => {
-        const { levels } = get()
+        const { levels, coins } = get()
         const levelData = levels.get(levelNumber)
 
         // Check if level exists and isn't already unlocked
@@ -233,33 +251,16 @@ export const useProgressStore = create<ProgressState>()(
           return false
         }
 
-        // Get coins from previous level (level N requires coins from level N-1)
-        const previousLevelNumber = levelNumber - 1
-        const coinsFromPreviousLevel = get().getCoinsFromLevel(previousLevelNumber)
-
-        // Check if player has enough coins from previous level
+        // Check if player has enough global coins
         const cost = calculateLevelCost(levelNumber)
-
-        if (coinsFromPreviousLevel < cost) {
+        if (coins < cost) {
           console.warn(
-            `Not enough coins to unlock level ${levelNumber}. Need ${cost}, have ${coinsFromPreviousLevel} from level ${previousLevelNumber}`
+            `Not enough coins to unlock level ${levelNumber}. Need ${cost}, have ${coins}`
           )
           return false
         }
 
-        // Deduct coins from previous level and unlock current level
-        const previousLevelData = levels.get(previousLevelNumber)
-        if (!previousLevelData) {
-          console.error(`Previous level ${previousLevelNumber} not found`)
-          return false
-        }
-
-        // Update previous level to deduct coins
-        await get().updateLevelProgress(previousLevelNumber, {
-          coinsEarned: previousLevelData.coinsEarned - cost,
-        })
-
-        // Unlock the current level
+        // Unlock the current level without deducting coins (global balance)
         await get().updateLevelProgress(levelNumber, { isUnlocked: true })
         return true
       },
@@ -303,9 +304,8 @@ export const useProgressStore = create<ProgressState>()(
         if (nextLevelData && !nextLevelData.isUnlocked) {
           const cost = calculateLevelCost(nextLevelNumber)
 
-          // Check if this level has enough coins to unlock the next level
-          if (totalCoinsForLevel >= cost) {
-            // Automatically unlock the next level and deduct coins
+          // Check global coin balance to unlock the next level
+          if (get().coins >= cost) {
             await get().unlockLevel(nextLevelNumber)
           }
         }
@@ -316,6 +316,7 @@ export const useProgressStore = create<ProgressState>()(
         set({
           levels: initialLevels(),
           currentLevel: 1,
+          coins: 0,
           error: null,
           lastSyncedAt: null,
         })
@@ -336,12 +337,14 @@ export const useProgressStore = create<ProgressState>()(
         levels: Array.from(state.levels.entries()),
         currentLevel: state.currentLevel,
         userId: state.userId,
+        coins: state.coins,
       }),
       onRehydrateStorage: () => (state) => {
         // Convert levels array back to Map after rehydration
         if (state && Array.isArray(state.levels)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           state.levels = new Map(state.levels as any)
+          state.coins = calculateCoinsFromLevels(state.levels)
         }
       },
     }

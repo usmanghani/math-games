@@ -1,17 +1,31 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import React, { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { SignUpForm } from '@/components/auth/SignUpForm'
 
 function AuthPageContent() {
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirectTo') || '/'
+
+  const modeParam = searchParams.get('mode')
+
+  const initialMode = useMemo(() => {
+    return modeParam === 'signup' ? 'signup' : 'login'
+  }, [modeParam])
+
+  const [mode, setMode] = useState<'login' | 'signup'>(initialMode)
+
+  // Keep the tab in sync with the URL query
+  useEffect(() => {
+    if (modeParam === 'signup' || modeParam === 'login') {
+      setMode(modeParam)
+    }
+  }, [modeParam])
 
   // Redirect if already authenticated
   if (authLoading) {

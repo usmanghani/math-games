@@ -18,16 +18,13 @@ export function LevelCard({ level }: LevelCardProps) {
     bestStreak,
   } = level
 
-  const getCoinsFromLevel = useProgressStore((state) => state.getCoinsFromLevel)
+  const coinBalance = useProgressStore((state) => state.coins)
   const unlockLevel = useProgressStore((state) => state.unlockLevel)
   const [isUnlocking, setIsUnlocking] = useState(false)
 
-  // Get coins from previous level (level N requires coins from level N-1)
-  const previousLevelNumber = levelNumber - 1
-  const coinsFromPreviousLevel = levelNumber > 1 ? getCoinsFromLevel(previousLevelNumber) : 0
-
   const cost = calculateLevelCost(levelNumber)
-  const canAfford = canAffordLevel(coinsFromPreviousLevel, levelNumber)
+  const canAfford = canAffordLevel(coinBalance, levelNumber)
+  const coinsNeeded = Math.max(cost - coinBalance, 0)
 
   // Handler for unlock button
   const handleUnlock = async () => {
@@ -74,7 +71,7 @@ export function LevelCard({ level }: LevelCardProps) {
           </button>
         ) : (
           <div className="mt-3 text-xs text-gray-400 text-center">
-            Need {cost - coinsFromPreviousLevel} more from Level {previousLevelNumber}
+            Need {coinsNeeded} more coin{coinsNeeded === 1 ? '' : 's'}
           </div>
         )}
       </div>

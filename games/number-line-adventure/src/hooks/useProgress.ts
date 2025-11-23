@@ -47,6 +47,7 @@ export function useProgress() {
     userId: store.userId,
     levels: levelsArray,
     currentLevel: store.currentLevel,
+    coins: store.coins,
     loading: store.loading,
     error: store.error,
     lastSyncedAt: store.lastSyncedAt,
@@ -61,6 +62,7 @@ export function useProgress() {
     getLevel,
     isLevelUnlocked,
     isLevelCompleted,
+    getTotalCoins: store.getTotalCoins,
 
     // Actions
     setUserId: store.setUserId,

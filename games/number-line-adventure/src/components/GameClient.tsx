@@ -45,6 +45,7 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
   const [history, setHistory] = useState<boolean[]>([])
   const [sessionComplete, setSessionComplete] = useState(false)
   const [progressSaved, setProgressSaved] = useState(false)
+  const coinsEarnedThisSession = correctCount * levelConfig.delta
 
   // Save progress when session completes
   useEffect(() => {
@@ -222,7 +223,9 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
               {correctCount > 0 && (
                 <p className="success-message flex items-center justify-center gap-2">
                   <span className="text-2xl">🪙</span>
-                  <span>You earned {correctCount} coin{correctCount === 1 ? '' : 's'}!</span>
+                  <span>
+                    You earned {coinsEarnedThisSession} coin{coinsEarnedThisSession === 1 ? '' : 's'} this run!
+                  </span>
                 </p>
               )}
               {correctCount >= 3 && hasNextLevel && (
