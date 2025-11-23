@@ -18,12 +18,12 @@ export function LevelProgressGrid() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {allLevels.map((level, index) => {
           const levelNumber = index + 1
-          const isUnlocked = level?.is_unlocked || false
-          const isCompleted = level?.is_completed || false
-          const bestScore = level?.best_score
-          const bestStreak = level?.best_streak
-          const coinsEarned = level?.coins_earned || 0
-          const totalAttempts = level?.total_attempts || 0
+          const isUnlocked = level?.isUnlocked || false
+          const isCompleted = level?.isCompleted || false
+          const bestScore = level?.bestScore
+          const bestStreak = level?.bestStreak
+          const coinsEarned = level?.coinsEarned || 0
+          const totalAttempts = level?.attemptsCount || 0
 
           return (
             <div
