@@ -6,6 +6,28 @@ import { Database } from '@/lib/database.types'
 
 type GameSession = Database['public']['Tables']['game_sessions']['Row']
 
+type Answer = {
+  question: string
+  userAnswer: number | null
+  correctAnswer: number
+  isCorrect: boolean
+}
+
+function isAnswerArray(data: unknown): data is Answer[] {
+  return (
+    Array.isArray(data) &&
+    data.every(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        'question' in item &&
+        'userAnswer' in item &&
+        'correctAnswer' in item &&
+        'isCorrect' in item
+    )
+  )
+}
+
 interface GameHistoryProps {
   userId: string
 }
@@ -17,41 +39,39 @@ export function GameHistory({ userId }: GameHistoryProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
-    loadHistory()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId])
-
-  const loadHistory = async () => {
-    if (!isSupabaseConfigured()) {
-      setError('Game history requires Supabase configuration')
-      setLoading(false)
-      return
-    }
-
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error: fetchError } = await (supabase as any)
-        .from('game_sessions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('completed_at', { ascending: false })
-        .limit(20)
-
-      if (fetchError) {
-        console.error('Error loading game history:', fetchError)
-        setError('Failed to load game history')
+    const loadHistory = async () => {
+      if (!isSupabaseConfigured()) {
+        setError('Game history requires Supabase configuration')
         setLoading(false)
         return
       }
 
-      setSessions((data || []) as GameSession[])
-    } catch (err) {
-      console.error('Error:', err)
-      setError('An unexpected error occurred')
-    } finally {
-      setLoading(false)
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('game_sessions')
+          .select('*')
+          .eq('user_id', userId)
+          .order('completed_at', { ascending: false })
+          .limit(20)
+
+        if (fetchError) {
+          console.error('Error loading game history:', fetchError)
+          setError('Failed to load game history')
+          setLoading(false)
+          return
+        }
+
+        setSessions((data || []) as GameSession[])
+      } catch (err) {
+        console.error('Error:', err)
+        setError('An unexpected error occurred')
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+
+    loadHistory()
+  }, [userId])
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A'
@@ -115,12 +135,8 @@ export function GameHistory({ userId }: GameHistoryProps) {
       <div className="space-y-3">
         {sessions.map((session) => {
           const isExpanded = expandedId === session.id
-          const answers = session.answers as Array<{
-            question: string
-            userAnswer: number | null
-            correctAnswer: number
-            isCorrect: boolean
-          }>
+          const answersData = session.answers
+          const answers = isAnswerArray(answersData) ? answersData : []
 
           return (
             <div
@@ -167,7 +183,7 @@ export function GameHistory({ userId }: GameHistoryProps) {
                     Question Details:
                   </div>
                   <div className="space-y-2">
-                    {answers && answers.length > 0 ? (
+                    {answers.length > 0 ? (
                       answers.map((answer, index) => (
                         <div
                           key={index}

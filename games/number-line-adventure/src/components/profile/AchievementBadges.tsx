@@ -26,7 +26,6 @@ export function AchievementBadges({ userId }: AchievementBadgesProps) {
 
   useEffect(() => {
     loadBadges()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])
 
   const loadBadges = async () => {
@@ -38,8 +37,7 @@ export function AchievementBadges({ userId }: AchievementBadgesProps) {
 
     try {
       // Fetch user progress data
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error: fetchError } = await (supabase as any)
+      const { data, error: fetchError } = await supabase
         .from('user_progress')
         .select('*')
         .eq('user_id', userId)

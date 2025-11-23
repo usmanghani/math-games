@@ -36,7 +36,6 @@ export function PerformanceChart({ userId }: PerformanceChartProps) {
 
   useEffect(() => {
     loadChartData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])
 
   const loadChartData = async () => {
@@ -48,8 +47,7 @@ export function PerformanceChart({ userId }: PerformanceChartProps) {
 
     try {
       // Fetch all game sessions for the user
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error: fetchError } = await (supabase as any)
+      const { data, error: fetchError } = await supabase
         .from('game_sessions')
         .select('*')
         .eq('user_id', userId)

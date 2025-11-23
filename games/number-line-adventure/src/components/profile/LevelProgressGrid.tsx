@@ -17,7 +17,6 @@ export function LevelProgressGrid({ userId }: LevelProgressGridProps) {
 
   useEffect(() => {
     loadLevels()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])
 
   const loadLevels = async () => {
@@ -28,8 +27,7 @@ export function LevelProgressGrid({ userId }: LevelProgressGridProps) {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error: fetchError } = await (supabase as any)
+      const { data, error: fetchError } = await supabase
         .from('user_progress')
         .select('*')
         .eq('user_id', userId)
