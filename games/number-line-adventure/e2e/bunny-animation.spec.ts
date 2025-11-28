@@ -6,8 +6,8 @@ import { test, expect } from '@playwright/test'
  */
 test.describe('Bunny Animation and Layout', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to game page
-    await page.goto('/game?level=1')
+    // Navigate to home page (game is on home page in this branch)
+    await page.goto('/')
     await page.waitForSelector('.number-line', { timeout: 10000 })
   })
 

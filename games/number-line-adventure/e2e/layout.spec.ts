@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test'
  */
 test.describe('Layout Improvements', () => {
   test('number line has reduced top padding', async ({ page }) => {
-    await page.goto('/game?level=1')
+    await page.goto('/')
     await page.waitForSelector('.number-line', { timeout: 10000 })
 
     const numberLine = page.locator('.number-line')
@@ -21,7 +21,7 @@ test.describe('Layout Improvements', () => {
   })
 
   test('number line legend is properly positioned', async ({ page }) => {
-    await page.goto('/game?level=1')
+    await page.goto('/')
     await page.waitForSelector('.number-line__legend', { timeout: 10000 })
 
     const legend = page.locator('.number-line__legend')
@@ -38,7 +38,7 @@ test.describe('Layout Improvements', () => {
   })
 
   test('bunny marker is positioned correctly', async ({ page }) => {
-    await page.goto('/game?level=1')
+    await page.goto('/')
     await page.waitForSelector('.number-line__marker', { timeout: 10000 })
 
     const bunnyMarker = page.locator('.number-line__marker')
@@ -56,7 +56,7 @@ test.describe('Layout Improvements', () => {
   })
 
   test('number line is visible and properly sized', async ({ page }) => {
-    await page.goto('/game?level=1')
+    await page.goto('/')
     await page.waitForSelector('.number-line', { timeout: 10000 })
 
     const numberLine = page.locator('.number-line')
