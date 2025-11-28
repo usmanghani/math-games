@@ -79,30 +79,21 @@ async function playRound(page: any, roundNumber: number) {
  */
 test.describe('Number Line Adventure Gameplay', () => {
   test('play three levels', async ({ page }) => {
-    // Navigate to home page
+    // Navigate directly to game page (this branch uses simple GameClient on home)
     await page.goto('/')
     await expect(page).toHaveTitle(/Number Line Adventure/)
+    
+    // Wait for game to load - look for number line or problem
+    await Promise.race([
+      page.waitForSelector('.number-line', { timeout: 15000 }),
+      page.waitForSelector('.equation-card', { timeout: 15000 }),
+      page.waitForSelector('text=/Our bunny starts/i', { timeout: 15000 })
+    ])
 
-    // Click "Play Now" button (for guest users)
-    const playButton = page.getByRole('link', { name: /play now/i })
-    await playButton.click()
-
-    // Should navigate to levels page
-    await expect(page).toHaveURL(/\/levels/)
-    await page.waitForSelector('text=/Select a Level/i', { timeout: 5000 })
-
-    // Play Level 1
+    // Play Level 1 (game starts automatically on home page)
     await test.step('Play Level 1', async () => {
-      // Find Level 1 card (it's a Link, not a button)
-      const level1Link = page.locator('a[href="/game?level=1"]').first()
-      await level1Link.click()
-      await expect(page).toHaveURL(/\/game\?level=1/)
-
-      // Wait for game to load - look for the equation card or prompt
-      await Promise.race([
-        page.waitForSelector('.equation-card', { timeout: 10000 }),
-        page.waitForSelector('text=/Our bunny starts/i', { timeout: 10000 })
-      ])
+      // Wait for game elements to appear
+      await page.waitForSelector('.number-line', { timeout: 10000 })
 
       // Play 5 rounds
       for (let round = 1; round <= 5; round++) {
@@ -110,65 +101,49 @@ test.describe('Number Line Adventure Gameplay', () => {
       }
 
       // Wait for completion screen - look for "Way to hop!" or "Complete!" stat
-      await page.waitForSelector('text=/Way to hop|Complete!/i', { timeout: 15000 })
+      await page.waitForSelector('text=/Way to hop|Complete!|Session Complete/i', { timeout: 15000 })
     })
 
-    // Navigate back to levels
-    await test.step('Return to levels', async () => {
-      const levelSelectButton = page.getByRole('button', { name: /level select/i })
-      await levelSelectButton.click()
-      await expect(page).toHaveURL(/\/levels/)
-      await page.waitForSelector('text=/Select a Level/i', { timeout: 5000 })
-    })
-
-    // Play Level 2
+    // Play Level 2 - restart game for new session
     await test.step('Play Level 2', async () => {
-      const level2Link = page.locator('a[href="/game?level=2"]').first()
-      await level2Link.click()
-      await expect(page).toHaveURL(/\/game\?level=2/)
-
-      // Wait for game to load - look for the equation card or prompt
-      await Promise.race([
-        page.waitForSelector('.equation-card', { timeout: 10000 }),
-        page.waitForSelector('text=/Our bunny starts/i', { timeout: 10000 })
-      ])
+      // Click "Play again" button if available, or reload page
+      const playAgainButton = page.locator('button:has-text("Play again"), button:has-text("Play Again")').first()
+      if (await playAgainButton.isVisible().catch(() => false)) {
+        await playAgainButton.click()
+        await page.waitForTimeout(1000)
+      } else {
+        await page.reload()
+        await page.waitForSelector('.number-line', { timeout: 10000 })
+      }
 
       // Play 5 rounds
       for (let round = 1; round <= 5; round++) {
         await playRound(page, round)
       }
 
-      // Wait for completion screen - look for "Way to hop!" or "Complete!" stat
-      await page.waitForSelector('text=/Way to hop|Complete!/i', { timeout: 15000 })
+      // Wait for completion screen
+      await page.waitForSelector('text=/Way to hop|Complete!|Session Complete/i', { timeout: 15000 })
     })
 
-    // Navigate back to levels
-    await test.step('Return to levels again', async () => {
-      const levelSelectButton = page.getByRole('button', { name: /level select/i })
-      await levelSelectButton.click()
-      await expect(page).toHaveURL(/\/levels/)
-      await page.waitForSelector('text=/Select a Level/i', { timeout: 5000 })
-    })
-
-    // Play Level 3
+    // Play Level 3 - restart game for new session
     await test.step('Play Level 3', async () => {
-      const level3Link = page.locator('a[href="/game?level=3"]').first()
-      await level3Link.click()
-      await expect(page).toHaveURL(/\/game\?level=3/)
-
-      // Wait for game to load - look for the equation card or prompt
-      await Promise.race([
-        page.waitForSelector('.equation-card', { timeout: 10000 }),
-        page.waitForSelector('text=/Our bunny starts/i', { timeout: 10000 })
-      ])
+      // Click "Play again" button if available, or reload page
+      const playAgainButton = page.locator('button:has-text("Play again"), button:has-text("Play Again")').first()
+      if (await playAgainButton.isVisible().catch(() => false)) {
+        await playAgainButton.click()
+        await page.waitForTimeout(1000)
+      } else {
+        await page.reload()
+        await page.waitForSelector('.number-line', { timeout: 10000 })
+      }
 
       // Play 5 rounds
       for (let round = 1; round <= 5; round++) {
         await playRound(page, round)
       }
 
-      // Wait for completion screen - look for "Way to hop!" or "Complete!" stat
-      await page.waitForSelector('text=/Way to hop|Complete!/i', { timeout: 15000 })
+      // Wait for completion screen
+      await page.waitForSelector('text=/Way to hop|Complete!|Session Complete/i', { timeout: 15000 })
     })
   })
 })

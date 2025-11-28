@@ -1,0 +1,99 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - paragraph [ref=e4]: Milestone 1 prototype
+      - heading "Number Line Adventure" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Strengthen gentle addition and subtraction by tracing our bunny's hops on a colorful number line.
+    - region "Progress dashboard" [ref=e7]:
+      - generic [ref=e8]:
+        - paragraph [ref=e9]: Round 1 of 5
+        - paragraph [ref=e10]: 1/5
+      - generic [ref=e11]:
+        - paragraph [ref=e12]: Correct answers
+        - paragraph [ref=e13]: "0"
+      - generic [ref=e14]:
+        - paragraph [ref=e15]: Best streak
+        - paragraph [ref=e16]: "0"
+      - generic [ref=e17]:
+        - paragraph [ref=e18]: Session progress
+        - img "Progress 0%" [ref=e19]
+    - main [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - paragraph [ref=e23]: Our bunny starts at 9 and hops forward 5 steps. Where will it land?
+          - paragraph [ref=e24]: Bunny starts at 9 and hops forward 5 steps. Guess the landing number!
+          - region "Number sentence" [ref=e25]:
+            - paragraph [ref=e26]: Number sentence
+            - img "9 plus 5 equals ?" [ref=e27]:
+              - generic [ref=e28]:
+                - generic [ref=e29]: Start
+                - text: "9"
+              - generic [ref=e30]: +
+              - generic [ref=e31]:
+                - generic [ref=e32]: Hops
+                - text: "5"
+              - generic [ref=e33]: =
+              - generic [ref=e34]:
+                - generic [ref=e35]: Landing
+                - text: "?"
+            - paragraph [ref=e36]: Tap a number to complete the sentence.
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - button "14" [ref=e39] [cursor=pointer]
+            - button "10" [ref=e40] [cursor=pointer]
+            - button "17" [ref=e41] [cursor=pointer]
+          - paragraph [ref=e42]: Pick the landing number and lock in your hop.
+          - button "Get a new problem" [disabled] [ref=e43]: Next challenge
+      - img "Interactive number line" [ref=e45]:
+        - generic [ref=e46]:
+          - generic [ref=e47]:
+            - img "Bunny start" [ref=e48]: 🐰
+            - generic [ref=e49]:
+              - paragraph [ref=e50]: Start
+              - paragraph [ref=e51]: "9"
+          - generic [ref=e52]:
+            - img "Carrot landing" [ref=e53]: 🥕
+            - generic [ref=e54]:
+              - paragraph [ref=e55]: Landing
+              - paragraph [ref=e56]: "??"
+        - generic [ref=e57]:
+          - generic [ref=e60]: "0"
+          - generic [ref=e63]: "1"
+          - generic [ref=e66]: "2"
+          - generic [ref=e69]: "3"
+          - generic [ref=e72]: "4"
+          - generic [ref=e75]: "5"
+          - generic [ref=e78]: "6"
+          - generic [ref=e81]: "7"
+          - generic [ref=e84]: "8"
+          - generic [ref=e87]: "9"
+          - generic [ref=e90]: "10"
+          - generic [ref=e93]: "11"
+          - generic [ref=e96]: "12"
+          - generic [ref=e99]: "13"
+          - generic [ref=e102]: "14"
+          - generic [ref=e105]: "15"
+          - generic [ref=e108]: "16"
+          - generic [ref=e111]: "17"
+          - generic [ref=e114]: "18"
+          - generic [ref=e117]: "19"
+          - generic [ref=e120]: "20"
+        - img "Bunny position" [ref=e122]: 🐰
+    - region "Timeline of rounds" [ref=e123]:
+      - generic "Round 1 not played yet" [ref=e124]
+      - generic "Round 2 not played yet" [ref=e125]
+      - generic "Round 3 not played yet" [ref=e126]
+      - generic "Round 4 not played yet" [ref=e127]
+      - generic "Round 5 not played yet" [ref=e128]
+  - status [ref=e129]:
+    - generic [ref=e130]:
+      - img [ref=e132]
+      - generic [ref=e134]:
+        - text: Static route
+        - button "Hide static indicator" [ref=e135] [cursor=pointer]:
+          - img [ref=e136]
+  - alert [ref=e139]
+```
