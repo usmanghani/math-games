@@ -29,6 +29,50 @@ Creates a new git worktree for a PR with automatic setup.
 - `SHORT_NAME`: Short descriptive name (e.g., "login-signup-ui")
 - `PR_TITLE`: Full PR title (e.g., "Login/Signup UI")
 
+### 2. simulate-gameplay.ts
+
+Simulates playing the Number Line Adventure game with different performance scenarios.
+
+**Usage:**
+```bash
+npx tsx scripts/simulate-gameplay.ts [scenario]
+```
+
+**Scenarios:**
+- `perfect` - Perfect play (100% accuracy) - default
+- `mixed` - Mixed performance (70% accuracy)
+- `struggling` - Struggling player (50% accuracy)
+- `all` - Run all scenarios sequentially
+
+**Examples:**
+```bash
+# Run perfect scenario (default)
+npx tsx scripts/simulate-gameplay.ts
+
+# Run mixed performance scenario
+npx tsx scripts/simulate-gameplay.ts mixed
+
+# Run struggling player scenario
+npx tsx scripts/simulate-gameplay.ts struggling
+
+# Run all scenarios
+npx tsx scripts/simulate-gameplay.ts all
+```
+
+**What it does:**
+1. Simulates playing 3 levels (Levels 1, 2, 3)
+2. Generates 5 problems per level using the actual game logic
+3. Simulates player answers based on the selected scenario
+4. Shows round-by-round results with correct/incorrect answers
+5. Displays session summaries with accuracy and streak tracking
+6. Provides overall statistics across all levels
+
+**Output:**
+- Detailed round-by-round gameplay
+- Session summaries per level
+- Overall statistics across all scenarios
+- Pass/fail status based on 60% accuracy requirement
+
 ## Quick Start
 
 ### Create a New PR Worktree
@@ -43,20 +87,17 @@ cd /Users/usmanaven.com/math-games
 # Follow the displayed next steps!
 ```
 
-### Manual Worktree Creation
-
-If you prefer to create worktrees manually:
+### Simulate Gameplay
 
 ```bash
-# Create worktree
-git worktree add \
-  /Users/usmanaven.com/math-games-worktrees/pr-6-profile-management \
-  -b feature/pr-6-profile-management \
-  feature/pr-5-login-signup-ui
+# Navigate to main repo
+cd /Users/usmanaven.com/math-games
 
-# Install dependencies
-cd /Users/usmanaven.com/math-games-worktrees/pr-6-profile-management/games/number-line-adventure
-pnpm install
+# Run simulation with default (perfect) scenario
+npx tsx scripts/simulate-gameplay.ts
+
+# Or run all scenarios
+npx tsx scripts/simulate-gameplay.ts all
 ```
 
 ## Common Commands
@@ -76,23 +117,6 @@ git worktree remove /Users/usmanaven.com/math-games-worktrees/pr-5-login-signup-
 git worktree prune
 ```
 
-## Adding @codex Review to PRs
-
-When creating a PR, add `@codex` review request in the PR description:
-
-```bash
-gh pr create \
-  --base feature/pr-5-login-signup-ui \
-  --title "PR #6: Profile Management" \
-  --body "Description of changes...
-
-@codex Please review this PR for:
-- Component design and usability
-- State management patterns
-- Error handling
-- Code quality and best practices"
-```
-
 ## Directory Structure
 
 ```
@@ -100,16 +124,14 @@ gh pr create \
 ├── math-games/                          ← Main repository
 │   ├── scripts/                         ← This directory
 │   │   ├── create-worktree.sh          ← Worktree creation script
+│   │   ├── simulate-gameplay.ts       ← Gameplay simulation script
 │   │   └── README.md                   ← This file
 │   └── WORKTREE_GUIDE.md               ← Complete worktree guide
 │
 └── math-games-worktrees/                ← All PR worktrees
     ├── pr-1-database-schema/
     ├── pr-2-level-configuration/
-    ├── pr-3-problem-generator/
-    ├── pr-4-auth-setup/
-    ├── pr-5-login-signup-ui/           ← Currently active
-    └── pr-6-profile-management/        ← Next to create
+    └── ...
 ```
 
 ## Tips
@@ -118,6 +140,7 @@ gh pr create \
 2. **Use descriptive short names**: "login-ui" not "ui" or "login-signup-ui" not "login"
 3. **Install deps per worktree**: Each worktree needs its own `node_modules`
 4. **Clean up merged PRs**: Remove worktrees after PRs are merged
+5. **Simulation script uses actual game logic**: Results reflect real gameplay mechanics
 
 ## Troubleshooting
 
@@ -137,6 +160,10 @@ git worktree remove /Users/usmanaven.com/math-games-worktrees/pr-N-name
 
 The script tries to find the previous PR's branch. If it fails, it falls back to `main`.
 You can manually specify a different base branch by editing the script or creating the worktree manually.
+
+### Simulation Script Errors
+
+If you see Supabase warnings, that's normal - the script uses fallback level configurations when Supabase isn't configured.
 
 ## More Information
 
