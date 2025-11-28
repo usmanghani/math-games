@@ -34,9 +34,11 @@ export const supabase = (isSupabaseConfigured()
     })
   : // Create a minimal placeholder client that won't make actual requests
     // This prevents "failed to fetch" errors when Supabase is not configured
+    // SECURITY: Using clearly invalid placeholder values that will fail immediately if accidentally used.
+    // This is safer than using real demo tokens that could be misused if guards are bypassed.
     createClient<Database>(
-      'https://placeholder.supabase.co',
-      'placeholder-anon-key',
+      'https://invalid-placeholder-do-not-use.supabase.co',
+      'INVALID_PLACEHOLDER_KEY_DO_NOT_USE_THIS_WILL_FAIL_IMMEDIATELY',
       {
         auth: {
           persistSession: false,
