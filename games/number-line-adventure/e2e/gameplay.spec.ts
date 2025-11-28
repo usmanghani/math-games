@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 /**
  * Helper function to play a single round
  */
-async function playRound(page: any, roundNumber: number) {
+async function playRound(page: Page) {
   // Wait for problem prompt to appear
   await page.waitForSelector('text=/Our bunny starts/i', { timeout: 10000 })
   
@@ -33,13 +33,15 @@ async function playRound(page: any, roundNumber: number) {
         const answerButton = page.getByRole('button', { name: String(correctAnswer) }).first()
         await answerButton.click()
         
-        // Wait for next button and click it
-        await page.waitForSelector('button.next:not(:disabled)', { timeout: 5000 }).catch(() => {})
-        await page.waitForTimeout(1000)
+        // Wait for next button and click it if it appears
         const nextButton = page.locator('button.next:not(:disabled)').first()
-        if (await nextButton.isVisible().catch(() => false)) {
+        try {
+          await nextButton.waitFor({ state: 'visible', timeout: 5000 })
           await nextButton.click()
-          await page.waitForTimeout(1000)
+          // Wait for next problem to appear
+          await page.waitForSelector('text=/Our bunny starts/i', { timeout: 5000 })
+        } catch {
+          // Next button may not appear on last round, which is fine
         }
         return
       }
@@ -59,17 +61,31 @@ async function playRound(page: any, roundNumber: number) {
   const answerButton = page.getByRole('button', { name: String(correctAnswer) }).first()
   await answerButton.click()
 
-  // Wait for feedback animation and next button to appear
-  await page.waitForSelector('button.next:not(:disabled)', { timeout: 5000 }).catch(() => {
-    // If next button doesn't appear, just wait a bit
-  })
-  await page.waitForTimeout(1000)
-
-  // Click next button if it exists and we're not on the last round
+  // Wait for next button and click it if it appears
   const nextButton = page.locator('button.next:not(:disabled)').first()
-  if (await nextButton.isVisible().catch(() => false)) {
+  try {
+    await nextButton.waitFor({ state: 'visible', timeout: 5000 })
     await nextButton.click()
-    await page.waitForTimeout(1000)
+    // Wait for next problem to appear
+    await page.waitForSelector('text=/Our bunny starts/i', { timeout: 5000 })
+  } catch {
+    // Next button may not appear on last round, which is fine
+  }
+}
+
+/**
+ * Helper function to restart the game session
+ */
+async function restartGame(page: Page) {
+  const playAgainButton = page.locator('button:has-text("Play again"), button:has-text("Play Again")').first()
+  try {
+    await playAgainButton.waitFor({ state: 'visible', timeout: 2000 })
+    await playAgainButton.click()
+    await page.waitForSelector('.number-line', { timeout: 10000 })
+  } catch {
+    // If no play again button, reload the page
+    await page.reload()
+    await page.waitForSelector('.number-line', { timeout: 10000 })
   }
 }
 
@@ -97,7 +113,7 @@ test.describe('Number Line Adventure Gameplay', () => {
 
       // Play 5 rounds
       for (let round = 1; round <= 5; round++) {
-        await playRound(page, round)
+        await playRound(page)
       }
 
       // Wait for completion screen - look for "Way to hop!" or "Complete!" stat
@@ -106,19 +122,11 @@ test.describe('Number Line Adventure Gameplay', () => {
 
     // Play Level 2 - restart game for new session
     await test.step('Play Level 2', async () => {
-      // Click "Play again" button if available, or reload page
-      const playAgainButton = page.locator('button:has-text("Play again"), button:has-text("Play Again")').first()
-      if (await playAgainButton.isVisible().catch(() => false)) {
-        await playAgainButton.click()
-        await page.waitForTimeout(1000)
-      } else {
-        await page.reload()
-        await page.waitForSelector('.number-line', { timeout: 10000 })
-      }
+      await restartGame(page)
 
       // Play 5 rounds
       for (let round = 1; round <= 5; round++) {
-        await playRound(page, round)
+        await playRound(page)
       }
 
       // Wait for completion screen
@@ -127,19 +135,11 @@ test.describe('Number Line Adventure Gameplay', () => {
 
     // Play Level 3 - restart game for new session
     await test.step('Play Level 3', async () => {
-      // Click "Play again" button if available, or reload page
-      const playAgainButton = page.locator('button:has-text("Play again"), button:has-text("Play Again")').first()
-      if (await playAgainButton.isVisible().catch(() => false)) {
-        await playAgainButton.click()
-        await page.waitForTimeout(1000)
-      } else {
-        await page.reload()
-        await page.waitForSelector('.number-line', { timeout: 10000 })
-      }
+      await restartGame(page)
 
       // Play 5 rounds
       for (let round = 1; round <= 5; round++) {
-        await playRound(page, round)
+        await playRound(page)
       }
 
       // Wait for completion screen

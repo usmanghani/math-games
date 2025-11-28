@@ -5,23 +5,14 @@ import { test, expect } from '@playwright/test'
  * Tests the visual layout changes from PR #11
  */
 test.describe('Layout Improvements', () => {
-  test('number line has reduced top padding', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await page.waitForSelector('.number-line', { timeout: 10000 })
-
-    const numberLine = page.locator('.number-line')
-    const paddingTop = await numberLine.evaluate((el) => {
-      return parseFloat(window.getComputedStyle(el).paddingTop)
-    })
-
-    // Should be 60px (reduced from 84px)
-    // Allow tolerance for browser rendering
-    expect(paddingTop).toBeLessThanOrEqual(65) // Should be 60px or less
-    expect(paddingTop).toBeGreaterThan(50) // But more than 50px
   })
 
+  // Note: 'number line has reduced top padding' test is in bunny-animation.spec.ts to avoid duplication
+
   test('number line legend is properly positioned', async ({ page }) => {
-    await page.goto('/')
     await page.waitForSelector('.number-line__legend', { timeout: 10000 })
 
     const legend = page.locator('.number-line__legend')
@@ -38,7 +29,6 @@ test.describe('Layout Improvements', () => {
   })
 
   test('bunny marker is positioned correctly', async ({ page }) => {
-    await page.goto('/')
     await page.waitForSelector('.number-line__marker', { timeout: 10000 })
 
     const bunnyMarker = page.locator('.number-line__marker')
@@ -56,8 +46,6 @@ test.describe('Layout Improvements', () => {
   })
 
   test('number line is visible and properly sized', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForSelector('.number-line', { timeout: 10000 })
 
     const numberLine = page.locator('.number-line')
     await expect(numberLine).toBeVisible()
