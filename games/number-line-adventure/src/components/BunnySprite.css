@@ -1,0 +1,187 @@
+.bunny-sprite {
+  display: inline-block;
+  position: relative;
+  transform-origin: center bottom;
+}
+
+.bunny-sprite__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Size variants */
+.bunny-sprite--small {
+  width: 32px;
+  height: 32px;
+}
+
+.bunny-sprite--medium {
+  width: 48px;
+  height: 48px;
+}
+
+.bunny-sprite--large {
+  width: 80px;
+  height: 80px;
+}
+
+/* Direction variants */
+.bunny-sprite--left {
+  transform: scaleX(-1);
+}
+
+.bunny-sprite--right {
+  transform: scaleX(1);
+}
+
+/* Idle animation - gentle bounce */
+.bunny-sprite--idle {
+  animation: bunnyIdle 2s ease-in-out infinite;
+}
+
+@keyframes bunnyIdle {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.02);
+  }
+}
+
+.bunny-sprite--idle.bunny-sprite--left {
+  animation: bunnyIdleLeft 2s ease-in-out infinite;
+}
+
+@keyframes bunnyIdleLeft {
+  0%, 100% {
+    transform: scaleX(-1) translateY(0) scale(1);
+  }
+  50% {
+    transform: scaleX(-1) translateY(-3px) scale(1.02);
+  }
+}
+
+/* Hop animation - more pronounced bounce */
+.bunny-sprite--hop {
+  animation: bunnyHop 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes bunnyHop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(-15px) scale(1.1);
+  }
+  60% {
+    transform: translateY(-8px) scale(0.95);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.bunny-sprite--hop.bunny-sprite--left {
+  animation: bunnyHopLeft 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes bunnyHopLeft {
+  0% {
+    transform: scaleX(-1) translateY(0) scale(1);
+  }
+  30% {
+    transform: scaleX(-1) translateY(-15px) scale(1.1);
+  }
+  60% {
+    transform: scaleX(-1) translateY(-8px) scale(0.95);
+  }
+  100% {
+    transform: scaleX(-1) translateY(0) scale(1);
+  }
+}
+
+/* Celebrate animation - excited bounce */
+.bunny-sprite--celebrate {
+  animation: bunnyCelebrate 0.8s ease-in-out infinite;
+}
+
+@keyframes bunnyCelebrate {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translateY(-12px) rotate(-5deg) scale(1.15);
+  }
+  75% {
+    transform: translateY(-12px) rotate(5deg) scale(1.15);
+  }
+}
+
+.bunny-sprite--celebrate.bunny-sprite--left {
+  animation: bunnyCelebrateLeft 0.8s ease-in-out infinite;
+}
+
+@keyframes bunnyCelebrateLeft {
+  0%, 100% {
+    transform: scaleX(-1) translateY(0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: scaleX(-1) translateY(-12px) rotate(5deg) scale(1.15);
+  }
+  75% {
+    transform: scaleX(-1) translateY(-12px) rotate(-5deg) scale(1.15);
+  }
+}
+
+/* Moving animation - for when bunny is traveling along the number line */
+.bunny-sprite--moving {
+  animation: bunnyMoving 0.6s ease-in-out infinite;
+}
+
+@keyframes bunnyMoving {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  20% {
+    transform: translateY(-8px) scale(1.05);
+  }
+  40% {
+    transform: translateY(-4px) scale(0.98);
+  }
+  60% {
+    transform: translateY(-8px) scale(1.05);
+  }
+  80% {
+    transform: translateY(-4px) scale(0.98);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.bunny-sprite--moving.bunny-sprite--left {
+  animation: bunnyMovingLeft 0.6s ease-in-out infinite;
+}
+
+@keyframes bunnyMovingLeft {
+  0% {
+    transform: scaleX(-1) translateY(0) scale(1);
+  }
+  20% {
+    transform: scaleX(-1) translateY(-8px) scale(1.05);
+  }
+  40% {
+    transform: scaleX(-1) translateY(-4px) scale(0.98);
+  }
+  60% {
+    transform: scaleX(-1) translateY(-8px) scale(1.05);
+  }
+  80% {
+    transform: scaleX(-1) translateY(-4px) scale(0.98);
+  }
+  100% {
+    transform: scaleX(-1) translateY(0) scale(1);
+  }
+}
+

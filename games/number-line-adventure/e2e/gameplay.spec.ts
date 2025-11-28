@@ -26,20 +26,30 @@ async function playRound(page: any, roundNumber: number) {
         const operation = equationText.includes('+') ? 'forward' : 'backward'
         const correctAnswer = operation === 'forward' ? start + delta : start - delta
         
-        // Wait for answer buttons to be enabled
-        await page.waitForSelector('button.choice:not(:disabled)', { timeout: 10000 })
+        // Wait for number line to be interactive (clickable ticks)
+        await page.waitForSelector('.number-line__tick--clickable', { timeout: 10000 })
         
-        // Click the correct answer button
-        const answerButton = page.getByRole('button', { name: String(correctAnswer) }).first()
-        await answerButton.click()
+        // Click the correct answer on the number line using data-value attribute for reliable selection
+        const answerTick = page.locator(`.number-line__tick--clickable[data-value="${correctAnswer}"]`).first()
+        await answerTick.waitFor({ state: 'visible', timeout: 5000 })
+        await answerTick.click()
         
         // Wait for next button and click it
-        await page.waitForSelector('button.next:not(:disabled)', { timeout: 5000 }).catch(() => {})
-        await page.waitForTimeout(1000)
-        const nextButton = page.locator('button.next:not(:disabled)').first()
-        if (await nextButton.isVisible().catch(() => false)) {
-          await nextButton.click()
-          await page.waitForTimeout(1000)
+        try {
+          await page.waitForSelector('button.next:not(:disabled)', { timeout: 10000 })
+          await page.waitForTimeout(300)
+          const nextButton = page.locator('button.next:not(:disabled)').first()
+          const isVisible = await nextButton.isVisible({ timeout: 2000 }).catch(() => false)
+          if (isVisible) {
+            await nextButton.click()
+            await page.waitForTimeout(300)
+          }
+        } catch (error) {
+          // Check if we're on completion screen
+          const completionScreen = await page.locator('text=/Way to hop|Complete!/i').isVisible({ timeout: 2000 }).catch(() => false)
+          if (!completionScreen) {
+            throw new Error(`Next button not found in alternative path: ${error}`)
+          }
         }
         return
       }
@@ -52,24 +62,35 @@ async function playRound(page: any, roundNumber: number) {
   const delta = parseInt(match[3])
   const correctAnswer = direction === 'forward' ? start + delta : start - delta
 
-  // Wait for answer buttons to be enabled (not disabled)
-  await page.waitForSelector('button.choice:not(:disabled)', { timeout: 10000 })
+  // Wait for number line to be interactive (clickable ticks)
+  await page.waitForSelector('.number-line__tick--clickable', { timeout: 10000 })
 
-  // Find and click the correct answer button
-  const answerButton = page.getByRole('button', { name: String(correctAnswer) }).first()
-  await answerButton.click()
+  // Find and click the correct answer on the number line using data-value attribute for reliable selection
+  const answerTick = page.locator(`.number-line__tick--clickable[data-value="${correctAnswer}"]`).first()
+  await answerTick.waitFor({ state: 'visible', timeout: 5000 })
+  await answerTick.click()
 
   // Wait for feedback animation and next button to appear
-  await page.waitForSelector('button.next:not(:disabled)', { timeout: 5000 }).catch(() => {
-    // If next button doesn't appear, just wait a bit
-  })
-  await page.waitForTimeout(1000)
-
-  // Click next button if it exists and we're not on the last round
-  const nextButton = page.locator('button.next:not(:disabled)').first()
-  if (await nextButton.isVisible().catch(() => false)) {
-    await nextButton.click()
-    await page.waitForTimeout(1000)
+  try {
+    await page.waitForSelector('button.next:not(:disabled)', { timeout: 10000 })
+    // Small delay to ensure UI is ready
+    await page.waitForTimeout(300)
+    
+    // Click next button if it exists and we're not on the last round
+    const nextButton = page.locator('button.next:not(:disabled)').first()
+    const isVisible = await nextButton.isVisible({ timeout: 2000 }).catch(() => false)
+    if (isVisible) {
+      await nextButton.click()
+      // Wait for navigation/state change
+      await page.waitForTimeout(300)
+    }
+  } catch (error) {
+    // If next button doesn't appear, the round might be complete or we're on the last round
+    // Check if we're on completion screen
+    const completionScreen = await page.locator('text=/Way to hop|Complete!/i').isVisible({ timeout: 2000 }).catch(() => false)
+    if (!completionScreen) {
+      throw new Error(`Next button not found and not on completion screen: ${error}`)
+    }
   }
 }
 

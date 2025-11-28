@@ -1,4 +1,5 @@
 import './NumberLine.css'
+import BunnySprite from './BunnySprite'
 
 interface NumberLineProps {
   min: number
@@ -6,6 +7,10 @@ interface NumberLineProps {
   start: number
   end: number
   reveal?: boolean
+  options?: number[]
+  onNumberClick?: (value: number) => void
+  selected?: number | null
+  disabled?: boolean
 }
 
 const getPercent = (value: number, min: number, max: number) => {
@@ -13,7 +18,17 @@ const getPercent = (value: number, min: number, max: number) => {
   return ((value - min) / (max - min)) * 100
 }
 
-export const NumberLine = ({ min, max, start, end, reveal = false }: NumberLineProps) => {
+export const NumberLine = ({ 
+  min, 
+  max, 
+  start, 
+  end, 
+  reveal = false, 
+  options = [], 
+  onNumberClick, 
+  selected = null,
+  disabled = false 
+}: NumberLineProps) => {
   const ticks = []
   for (let value = min; value <= max; value += 1) {
     ticks.push({ value, percent: getPercent(value, min, max) })
@@ -40,9 +55,9 @@ export const NumberLine = ({ min, max, start, end, reveal = false }: NumberLineP
     <div className="number-line" role="img" aria-label="Interactive number line">
       <div className="number-line__legend">
         <div className="number-line__legend-card number-line__legend-card--start">
-          <span className="number-line__legend-emoji" role="img" aria-label="Bunny start">
-            🐰
-          </span>
+          <div className="number-line__legend-sprite">
+            <BunnySprite size="medium" animation="idle" direction="right" />
+          </div>
           <div>
             <p className="number-line__legend-label">Start</p>
             <p className="number-line__legend-value">{start}</p>
@@ -65,8 +80,26 @@ export const NumberLine = ({ min, max, start, end, reveal = false }: NumberLineP
       </div>
       <div className="number-line__ticks">
         {ticks.map(({ value, percent }) => {
+          const isClickable = !reveal && !disabled && options.includes(value) && onNumberClick
+          const isSelected = selected === value
           return (
-            <div className="number-line__tick" style={{ left: `${percent}%` }} key={value}>
+            <div 
+              className={`number-line__tick ${isClickable ? 'number-line__tick--clickable' : ''} ${isSelected ? 'number-line__tick--selected' : ''}`}
+              style={{ left: `${percent}%` }} 
+              key={value}
+              onClick={isClickable ? () => onNumberClick(value) : undefined}
+              onKeyDown={isClickable ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onNumberClick(value)
+                }
+              } : undefined}
+              role={isClickable ? 'button' : undefined}
+              aria-label={isClickable ? `Select ${value}` : undefined}
+              aria-pressed={isClickable ? isSelected : undefined}
+              data-value={value}
+              tabIndex={isClickable ? 0 : undefined}
+            >
               <span className="number-line__tick-mark" />
               <span className="number-line__label">{value}</span>
             </div>
@@ -77,7 +110,11 @@ export const NumberLine = ({ min, max, start, end, reveal = false }: NumberLineP
         className={`number-line__marker ${reveal ? 'number-line__marker--moving' : ''}`}
         style={{ left: reveal ? `${adjustedEndPercent}%` : `${adjustedStartPercent}%` }}
       >
-        <span role="img" aria-label="Bunny position">🐰</span>
+        <BunnySprite 
+          size="large" 
+          animation={reveal ? 'moving' : 'idle'} 
+          direction={end >= start ? 'right' : 'left'} 
+        />
       </div>
       {reveal && (
         <>

@@ -41,6 +41,15 @@
   font-size: 1.5rem;
 }
 
+.number-line__legend-sprite {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
 .number-line__legend-label {
   margin: 0;
   font-size: 0.75rem;
@@ -126,13 +135,73 @@
   font-variant-numeric: tabular-nums;
 }
 
+.number-line__tick--clickable {
+  cursor: pointer;
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.number-line__tick--clickable:hover {
+  transform: translateX(-50%) scale(1.15);
+  filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.2));
+}
+
+.number-line__tick--clickable:focus-visible {
+  outline: 3px solid #38bdf8;
+  outline-offset: 4px;
+  border-radius: 8px;
+  z-index: 5;
+}
+
+.number-line__tick--clickable:focus-visible .number-line__tick-mark {
+  background: #2563eb;
+  height: 32px;
+}
+
+.number-line__tick--clickable:focus-visible .number-line__label {
+  color: #2563eb;
+  font-weight: 900;
+}
+
+.number-line__tick--clickable .number-line__tick-mark {
+  background: #3b82f6;
+  transition: background 150ms ease;
+}
+
+.number-line__tick--clickable:hover .number-line__tick-mark {
+  background: #2563eb;
+  height: 32px;
+}
+
+.number-line__tick--clickable .number-line__label {
+  color: #3b82f6;
+  font-weight: 800;
+  transition: color 150ms ease;
+}
+
+.number-line__tick--clickable:hover .number-line__label {
+  color: #2563eb;
+}
+
+.number-line__tick--selected .number-line__tick-mark {
+  background: #10b981;
+  height: 32px;
+}
+
+.number-line__tick--selected .number-line__label {
+  color: #059669;
+  font-weight: 900;
+}
+
 .number-line__marker {
   position: absolute;
-  bottom: 20px;
+  bottom: 10px;
   transform: translateX(-50%);
-  font-size: 1.5rem;
-  line-height: 1;
-  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.2));
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.25));
   z-index: 10;
   transition: left 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -247,3 +316,5 @@
     transform: translateX(-50%) translateY(0);
   }
 }
+
+/* Bunny sprite animation is handled by BunnySprite component */

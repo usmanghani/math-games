@@ -141,7 +141,8 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
         : pickMessage(POSITIVE_FEEDBACK, problem.answer)
     }
 
-    return pickMessage(GROWTH_FEEDBACK, problem.start)
+    // Wrong answer feedback - show correct answer
+    return `Not quite. The correct answer is ${problem.answer}. ${pickMessage(GROWTH_FEEDBACK, problem.start)}`
   }, [isCorrect, problem.answer, problem.start, selected, sessionComplete, showResult, streak])
 
   const hopDirection = problem.operation === 'addition' ? 'forward' : 'backward'
@@ -169,6 +170,106 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
         </p>
       </header>
 
+      <main className="play-area">
+        <div className="play-panels">
+          <section className="scene">
+            <p className="prompt">{sessionComplete ? 'That was a full adventure!' : problem.prompt}</p>
+            <p className="scene__hint">
+              {sessionComplete
+                ? 'Review the timeline below or jump back in for another trail.'
+                : `Bunny starts at ${problem.start} and hops ${hopDirection} ${problem.delta} step${
+                    problem.delta === 1 ? '' : 's'
+                  }. Guess the landing number!`}
+            </p>
+            {!sessionComplete && (
+              <>
+                <EquationCard
+                  start={problem.start}
+                  delta={problem.delta}
+                  operation={problem.operation}
+                  reveal={showResult}
+                  selected={selected}
+                  answer={problem.answer}
+                />
+                <p className={`feedback ${showResult && selected !== null ? (isCorrect ? 'feedback--correct' : 'feedback--incorrect') : ''}`}>{feedback}</p>
+                <button className="next" onClick={handleNext} disabled={!showResult} aria-label="Get a new problem">
+                  {isLastRound ? 'See progress report' : 'Next challenge'}
+                </button>
+              </>
+            )}
+            {sessionComplete && (
+              <div className="summary">
+                <h2>Way to hop!</h2>
+                <p>
+                  You solved {correctCount} of {TOTAL_ROUNDS} challenges. Your longest streak was {bestStreak}{' '}
+                  correct hop{bestStreak === 1 ? '' : 's'}.
+                </p>
+                {correctCount > 0 && (
+                  <p className="success-message flex items-center justify-center gap-2">
+                    <span className="text-2xl">🪙</span>
+                    <span>
+                      You earned {coinsEarnedThisSession} coin{coinsEarnedThisSession === 1 ? '' : 's'} this run!
+                    </span>
+                  </p>
+                )}
+                {correctCount >= 3 && hasNextLevel && (
+                  <p className="success-message">
+                    {isNextLevelUnlocked
+                      ? `Great job! Level ${nextLevelNumber} is ready to play!`
+                      : `Keep earning coins to unlock Level ${nextLockedLevel}!`}
+                  </p>
+                )}
+                <div className="action-buttons">
+                  <button className="next" onClick={restartSession}>
+                    Play again
+                  </button>
+                  {hasNextLevel && isNextLevelUnlocked && (
+                    <button
+                      className="next next--primary"
+                      onClick={() => router.push(`/game?level=${nextLevelNumber}`)}
+                    >
+                      Next Level →
+                    </button>
+                  )}
+                  <button
+                    className="next next--secondary"
+                    onClick={() => router.push('/levels')}
+                  >
+                    Level Select
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+        <section className="number-line-panel">
+          <NumberLine
+            min={problem.min}
+            max={problem.max}
+            start={problem.start}
+            end={problem.answer}
+            reveal={showResult || sessionComplete}
+            options={sessionComplete ? [] : problem.options}
+            onNumberClick={sessionComplete ? undefined : handleAnswer}
+            selected={selected}
+            disabled={showResult || sessionComplete}
+          />
+        </section>
+      </main>
+
+      <section className="timeline" aria-label="Timeline of rounds">
+        {timeline.map((result, index) => {
+          const status = result === undefined ? 'pending' : result ? 'correct' : 'incorrect'
+          const label =
+            result === undefined
+              ? `Round ${index + 1} not played yet`
+              : `Round ${index + 1} ${result ? 'correct' : 'incorrect'}`
+          return (
+            <span key={`round-${index}`} className={`timeline__dot timeline__dot--${status}`} aria-label={label} />
+          )
+        })}
+      </section>
+
       <section className="session-panel" aria-label="Progress dashboard">
         <div className="stat-card">
           <p className="stat-label">{encouragementTitle}</p>
@@ -188,120 +289,6 @@ export default function GameClient({ levelNumber, levelConfig }: GameClientProps
             <span className="progress-bar__fill" style={{ width: `${progress}%` }} />
           </div>
         </div>
-      </section>
-
-      <main className="play-area">
-        <div className="play-panels">
-          <section className="scene">
-            <p className="prompt">{sessionComplete ? 'That was a full adventure!' : problem.prompt}</p>
-            <p className="scene__hint">
-              {sessionComplete
-                ? 'Review the timeline below or jump back in for another trail.'
-                : `Bunny starts at ${problem.start} and hops ${hopDirection} ${problem.delta} step${
-                    problem.delta === 1 ? '' : 's'
-                  }. Guess the landing number!`}
-            </p>
-            {!sessionComplete && (
-              <EquationCard
-                start={problem.start}
-                delta={problem.delta}
-                operation={problem.operation}
-                reveal={showResult}
-                selected={selected}
-                answer={problem.answer}
-              />
-            )}
-          </section>
-          <section className="choices" aria-live="polite">
-          {sessionComplete ? (
-            <div className="summary">
-              <h2>Way to hop!</h2>
-              <p>
-                You solved {correctCount} of {TOTAL_ROUNDS} challenges. Your longest streak was {bestStreak}{' '}
-                correct hop{bestStreak === 1 ? '' : 's'}.
-              </p>
-              {correctCount > 0 && (
-                <p className="success-message flex items-center justify-center gap-2">
-                  <span className="text-2xl">🪙</span>
-                  <span>
-                    You earned {coinsEarnedThisSession} coin{coinsEarnedThisSession === 1 ? '' : 's'} this run!
-                  </span>
-                </p>
-              )}
-              {correctCount >= 3 && hasNextLevel && (
-                <p className="success-message">
-                  {isNextLevelUnlocked
-                    ? `Great job! Level ${nextLevelNumber} is ready to play!`
-                    : `Keep earning coins to unlock Level ${nextLockedLevel}!`}
-                </p>
-              )}
-              <div className="action-buttons">
-                <button className="next" onClick={restartSession}>
-                  Play again
-                </button>
-                {hasNextLevel && isNextLevelUnlocked && (
-                  <button
-                    className="next next--primary"
-                    onClick={() => router.push(`/game?level=${nextLevelNumber}`)}
-                  >
-                    Next Level →
-                  </button>
-                )}
-                <button
-                  className="next next--secondary"
-                  onClick={() => router.push('/levels')}
-                >
-                  Level Select
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="choices__grid">
-                {problem.options.map((option) => {
-                  const state = selected === option ? (isCorrect ? 'correct' : 'incorrect') : 'idle'
-                  return (
-                    <button
-                      key={option}
-                      className={`choice choice--${state}`}
-                      onClick={() => handleAnswer(option)}
-                      disabled={showResult}
-                    >
-                      {option}
-                    </button>
-                  )
-                })}
-              </div>
-              <p className="feedback">{feedback}</p>
-              <button className="next" onClick={handleNext} disabled={!showResult} aria-label="Get a new problem">
-                {isLastRound ? 'See progress report' : 'Next challenge'}
-              </button>
-            </>
-          )}
-          </section>
-        </div>
-        <section className="number-line-panel">
-          <NumberLine
-            min={problem.min}
-            max={problem.max}
-            start={problem.start}
-            end={problem.answer}
-            reveal={showResult || sessionComplete}
-          />
-        </section>
-      </main>
-
-      <section className="timeline" aria-label="Timeline of rounds">
-        {timeline.map((result, index) => {
-          const status = result === undefined ? 'pending' : result ? 'correct' : 'incorrect'
-          const label =
-            result === undefined
-              ? `Round ${index + 1} not played yet`
-              : `Round ${index + 1} ${result ? 'correct' : 'incorrect'}`
-          return (
-            <span key={`round-${index}`} className={`timeline__dot timeline__dot--${status}`} aria-label={label} />
-          )
-        })}
       </section>
     </div>
   )
