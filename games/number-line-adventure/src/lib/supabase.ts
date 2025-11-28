@@ -4,8 +4,8 @@ import type { Database } from './database.types'
 // Supabase client configuration
 // These environment variables should be set in .env.local (development)
 // and in Vercel environment variables (production)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
 // Create a single supabase client for interacting with your database
 // Note: If environment variables are missing, this will create a non-functional client
