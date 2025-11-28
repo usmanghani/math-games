@@ -109,8 +109,8 @@ test.describe('Number Line Adventure Gameplay', () => {
         await playRound(page, round)
       }
 
-      // Wait for completion screen
-      await page.waitForSelector('text=/Session Complete|Round 5/i', { timeout: 10000 })
+      // Wait for completion screen - look for "Way to hop!" or "Complete!" stat
+      await page.waitForSelector('text=/Way to hop|Complete!/i', { timeout: 15000 })
     })
 
     // Navigate back to levels
