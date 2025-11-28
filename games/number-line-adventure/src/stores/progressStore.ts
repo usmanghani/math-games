@@ -92,22 +92,44 @@ export const useProgressStore = create<ProgressState>()(
 
       // Set user ID and load their progress
       setUserId: async (userId: string | null) => {
+        const previousUserId = get().userId
         set({ userId, loading: true, error: null })
         if (userId) {
-          // If we have local progress, push it up before pulling from server
-          if (isSupabaseConfigured()) {
+          // Check if we're switching from one user to another
+          const isSwitchingUsers = previousUserId !== null && previousUserId !== userId
+          
+          if (isSwitchingUsers) {
+            // Switching users: clear previous user's progress to prevent data corruption
+            // Don't push old user's data to new user's account
+            set({
+              levels: initialLevels(),
+              currentLevel: 1,
+              coins: 0,
+              lastSyncedAt: null,
+            })
+          } else if (previousUserId === null && isSupabaseConfigured()) {
+            // First-time login: push local guest progress to server before loading
             await get().pushLocalProgressToServer(userId)
           }
+          
+          // Load the user's progress from server
           await get().loadProgress(userId)
         } else {
-          // User logged out, reset to initial state
-          set({
-            levels: initialLevels(),
-            currentLevel: 1,
-            coins: 0,
-            loading: false,
-            lastSyncedAt: null,
-          })
+          // Only reset progress if we're actually logging out (had a user before)
+          // Don't reset if we're starting as guest (previousUserId was also null)
+          if (previousUserId !== null) {
+            // User logged out, reset to initial state
+            set({
+              levels: initialLevels(),
+              currentLevel: 1,
+              coins: 0,
+              loading: false,
+              lastSyncedAt: null,
+            })
+          } else {
+            // Guest mode - keep local persisted state, just stop loading
+            set({ loading: false })
+          }
         }
       },
 
@@ -349,6 +371,16 @@ export const useProgressStore = create<ProgressState>()(
       // Push local progress to Supabase (used when a user signs in with existing local data)
       pushLocalProgressToServer: async (userId: string) => {
         if (!isSupabaseConfigured()) return
+
+        // Safety check: ensure we're pushing data for the current user
+        // This prevents data corruption if this function is called incorrectly
+        const currentUserId = get().userId
+        if (currentUserId !== userId) {
+          console.warn(
+            `pushLocalProgressToServer called with userId ${userId} but current userId is ${currentUserId}. Skipping to prevent data corruption.`
+          )
+          return
+        }
 
         const { levels } = get()
         const rows = Array.from(levels.values())
